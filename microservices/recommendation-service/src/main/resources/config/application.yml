@@ -1,0 +1,23 @@
+
+logging:
+  level:
+    root: INFO
+    com.me.work.example.microservices.core.recommendation: DEBUG
+    com.me.work.example.handler.http: DEBUG
+
+server:
+  port: 7002
+ 
+spring:
+  jackson:
+    deserialization:
+      accept-single-value-as-array: true
+    serialization:
+      write-dates-as-timestamps: false
+    generator:
+      write-numbers-as-strings: true
+    default-property-inclusion: NON_NULL #permits to not return fields with null value.
+    date-format: yyyy-MM-dd'T'HH:mm:ssZ
+    
+  webflux:
+    base-path: /api/v1
