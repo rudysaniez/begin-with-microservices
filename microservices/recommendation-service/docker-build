@@ -1,0 +1,10 @@
+
+#!/bin/bash
+
+set -e 
+
+cd $(dirname $0)
+
+docker build -t recommendation-service .
+ 
+docker images | grep -i recommendation-service

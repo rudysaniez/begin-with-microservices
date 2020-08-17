@@ -1,0 +1,7 @@
+
+server.port: 8083
+
+logging:
+  level:
+    com.me.work.example.microservices.core.review: DEBUG
+    com.me.work.example.handler.http: DEBUG

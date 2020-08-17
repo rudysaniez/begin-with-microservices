@@ -2,11 +2,8 @@
 logging:
   level:
     root: INFO
-    com.me.work.example.microservices.core.product: DEBUG
-    com.me.work.example.handler.http: DEBUG
 
-server:
-  port: 7001
+server.port: 7001
  
 spring:
   jackson:
@@ -21,3 +18,13 @@ spring:
     
   webflux:
     base-path: /api/v1
+    
+---
+spring.profiles: docker
+
+server.port: 8081
+
+logging:
+  level:
+    com.me.work.example.microservices.core.product: DEBUG
+    com.me.work.example.handler.http: DEBUG
