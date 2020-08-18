@@ -15,7 +15,7 @@ The **product-composite-service** calls :
 - recommendation-service
 - review-service
 
-Product-composite-service configuration file :
+**Product-composite-service** configuration file :
 
 	---
 	spring.profiles: docker
@@ -59,9 +59,21 @@ The aggregator is very simple, the objectif is to present the concept.
 	
 	docker ps -a | grep -i basic-rest-services-docker-3
 	
+Logs, you can use :
+	
+	docker-compose logs -f
+	
+You can add the names of the containers you want to see the log :
+
+	docker-compose logs -f product review
+	
 ## Call the product-composite-service
 
 	curl http://localhost:8081/api/v1/products-composite/1
+	
+If you use **jq** util :
+
+	curl http://localhost:8081/api/v1/products-composite/1 -s | jp
 	
 Response :
 
@@ -125,4 +137,10 @@ Response :
 	docker-compose down
 	
 	docker ps -a
+	
+## Test Product-composite-service with Docker
+
+The **jq** util is required for launch this bash file.
+
+	./test-em-all.bash start stop
 	
