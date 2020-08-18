@@ -1,58 +1,128 @@
-# Introduction to microservices with Spring Boot
+# Deploying microservices in Docker
 
 ## Presentation
 
 4 microservices are implemented :
 
-1. product-service (:7001)
-2. recommendation-service (:7002)
-3. review-service (:7003)
-4. product-composite-service (:7000)
+1. product-service
+2. recommendation-service
+3. review-service
+4. product-composite-service
 	
-The product-composite-service calls :
+The **product-composite-service** calls :
 
-- the product-service
-- the recommendation-service
-- the review-service
+- product-service
+- recommendation-service
+- review-service
 
-The **product-composite-service** aggregate the responses.
+Product-composite-service configuration file :
 
+	---
+	spring.profiles: docker
+	
+	server.port: 8081
+	
+	app:
+	  product-service:
+	    host: product
+	    port: 8081
+	    
+	  recommendation-service:
+	    host: recommendation
+	    port: 8082
+	    
+	  review-service:
+	    host: review
+	    port: 8083
+	
+	logging:
+	  level:
+	    com.me.work.example.microservices.core.composite: DEBUG
+	    com.me.work.example.handler.http: DEBUG
+	    
+When it receives a response, it aggregates the information.
 The aggregator is very simple, the objectif is to present the concept.
 
 ## Git
 
-	git clone git@github.com:rudysaniez/basic-rest-services-2.git
+	git clone git@github.com:rudysaniez/basic-rest-services-docker-3.git
 
 ## Maven
 
-	mvn clean package -Dmaven.test.skip
+	mvn clean package
 	
-## Start the products service
+## Starting up the microservices landscape
 
-	cd product-service/target
-	java -jar product-service-0.0.1-SNAPSHOT.jar
+	docker-compose up --build --detach
 	
-	curl http://localhost:7001/api/v1/products/1
+	docker images | grep -i basic-rest-services-docker-3
 	
-## Start the recommendations service
+	docker ps -a | grep -i basic-rest-services-docker-3
+	
+## Call the product-composite-service
 
-	cd recommendation-service/target
-	java -jar recommendation-service-0.0.1-SNAPSHOT.jar
+	curl http://localhost:8081/api/v1/products-composite/1
 	
-	curl http://localhost:7002/api/v1/recommendations?productId=1
-	
-## Start the reviews service
+Response :
 
-	cd review-service/target
-	java -jar review-service-0.0.1-SNAPSHOT.jar
-	
-	curl http://localhost:7003/api/v1/reviews?productId=1
-	
-## Start the products integration service
+	{
+	  "productId": "1",
+	  "product": {
+	    "productID": "1",
+	    "name": "name-1",
+	    "weight": "123"
+	  },
+	  "recommendations": [
+	    {
+	      "recommendationID": "1",
+	      "productID": "1",
+	      "author": "rudysaniez",
+	      "rate": "1",
+	      "content": "VALIDATED"
+	    },
+	    {
+	      "recommendationID": "2",
+	      "productID": "1",
+	      "author": "rudysaniez",
+	      "rate": "1",
+	      "content": "VALIDATED"
+	    },
+	    {
+	      "recommendationID": "3",
+	      "productID": "1",
+	      "author": "rudysaniez",
+	      "rate": "1",
+	      "content": "VALIDATED"
+	    }
+	  ],
+	  "reviews": [
+	    {
+	      "reviewID": "1",
+	      "productID": "1",
+	      "author": "rudysaniez",
+	      "subject": "review-1",
+	      "content": "VALIDATED"
+	    },
+	    {
+	      "reviewID": "2",
+	      "productID": "1",
+	      "author": "rudysaniez",
+	      "subject": "review-2",
+	      "content": "VALIDATED"
+	    },
+	    {
+	      "reviewID": "3",
+	      "productID": "1",
+	      "author": "rudysaniez",
+	      "subject": "review-3",
+	      "content": "VALIDATED"
+	    }
+	  ]
+	}
 
-	cd product-composite-service/target
-	java -jar product-composite-service-0.0.1-SNAPSHOT.jar
+## Stopping up the microservices
+
+	docker-compose down
 	
-	curl http://localhost:7000/api/v1/products-composite/1
-	
+	docker ps -a
 	

@@ -1,0 +1,58 @@
+
+version: "3.8"
+  
+services:
+  
+  product:
+    build: microservices/product-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 250M
+        reservations:
+          cpus: '0.25'
+          memory: 150M
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      
+  recommendation:
+    build: microservices/recommendation-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 250M
+        reservations:
+          cpus: '0.25'
+          memory: 150M
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      
+  review:
+    build: microservices/review-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 250M
+        reservations:
+          cpus: '0.25'
+          memory: 150M
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      
+  product-composite:
+    build: microservices/product-composite-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 250M
+        reservations:
+          cpus: '0.25'
+          memory: 150M
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker

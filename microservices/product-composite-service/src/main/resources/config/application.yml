@@ -2,11 +2,8 @@
 logging:
   level:
     root: INFO
-    com.me.work.example.microservices.core.composite: DEBUG
-    com.me.work.example.handler.http: DEBUG
 
-server:
-  port: 7000
+server.port: 7000
  
 app:
   product-service:
@@ -34,3 +31,27 @@ spring:
     
   webflux:
     base-path: /api/v1
+    
+---
+spring.profiles: docker
+
+server.port: 8081
+
+app:
+  product-service:
+    host: product
+    port: 8081
+    
+  recommendation-service:
+    host: recommendation
+    port: 8082
+    
+  review-service:
+    host: review
+    port: 8083
+
+logging:
+  level:
+    com.me.work.example.microservices.core.composite: DEBUG
+    com.me.work.example.handler.http: DEBUG
+    
