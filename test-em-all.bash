@@ -22,7 +22,7 @@ function assertCurl() {
     then
       echo "Test OK (HTTP Code: $httpCode, description=$3)"
     else
-      echo "Test OK (HTTP Code: $httpCode, $RESPONSE)"
+      echo "Test OK (HTTP Code: $httpCode, $RESPONSE, description=$3)"
     fi
   else
       echo  "Test FAILED, EXPECTED HTTP Code: $expectedHttpCode, GOT: $httpCode, WILL ABORT!"
@@ -127,6 +127,9 @@ assertEqual name-1 $(echo $RESPONSE | jq ".product.name") "The product name must
 assertEqual 3 $(echo $RESPONSE | jq ".recommendations | length") "3 recommendations must be found"
 assertEqual 3 $(echo $RESPONSE | jq ".reviews | length") "3 reviews must be found"
 
+assertCurl 404 "curl http://$HOST:$PORT/api/v1/products-composite/13 -s" "Get a 404 response status when the productId eq 13"
+
+assertCurl 422 "curl http://$HOST:$PORT/api/v1/products-composite/15 -s" "Get a 422 response status when the productId eq 15"
 
 if [[ $@ == *"stop"* ]]
 then
