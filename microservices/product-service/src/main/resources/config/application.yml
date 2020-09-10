@@ -28,3 +28,24 @@ logging:
   level:
     com.me.work.example.microservices.core.product: DEBUG
     com.me.work.example.handler.http: DEBUG
+    
+---
+spring.profiles: product-swagger
+
+api:
+
+  application-name: Products API
+  note: The products-api is an example for the API implementation.
+
+  common:
+    version: 1.0.0
+    title: Products API
+    description: The products-api is an example for the API implementation
+    termsOfServiceUrl: MINE TERMS OF SERVICE URL
+    license: License
+    licenseUrl: MY LICENSE URL
+
+    contact:
+      name: Rudy SANIEZ
+      url: https://github.com/rudysaniez
+      email: rudysaniez@laposte.net
