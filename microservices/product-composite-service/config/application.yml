@@ -1,0 +1,23 @@
+
+logging:
+  level:
+    root: INFO
+    com.me.work.example.microservices.core.composite: DEBUG
+    com.me.work.example.handler.http: DEBUG
+    
+    
+app:
+  product-service:
+    host: localhost
+    port: 8081
+    
+  recommendation-service:
+    host: localhost
+    port: 8082
+    
+  review-service:
+    host: localhost
+    port: 8083
+    
+    
+    

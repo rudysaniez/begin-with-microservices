@@ -13,7 +13,7 @@ spring:
       write-dates-as-timestamps: false
     generator:
       write-numbers-as-strings: true
-    default-property-inclusion: NON_NULL #permits to not return fields with null value.
+    default-property-inclusion: NON_NULL
     date-format: yyyy-MM-dd'T'HH:mm:ssZ
     
   webflux:
@@ -33,14 +33,10 @@ logging:
 spring.profiles: product-swagger
 
 api:
-
-  application-name: Products API
-  note: The products-api is an example for the API implementation.
-
   common:
     version: 1.0.0
-    title: Products API
-    description: The products-api is an example for the API implementation
+    title: Product API
+    description: The product API is an example for the API implementation
     termsOfServiceUrl: MINE TERMS OF SERVICE URL
     license: License
     licenseUrl: MY LICENSE URL

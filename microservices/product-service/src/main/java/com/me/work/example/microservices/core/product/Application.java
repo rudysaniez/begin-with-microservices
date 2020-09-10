@@ -50,7 +50,7 @@ public class Application {
 			
 	        return new Docket(DocumentationType.SWAGGER_2)  
 	          .select()                                  
-	          .apis(RequestHandlerSelectors.basePackage("com.me.work.greeting"))              
+	          .apis(RequestHandlerSelectors.basePackage("com.me.work.example.microservices.core.product"))              
 	          .paths(PathSelectors.any())                          
 	          .build()
 	          .apiInfo(new ApiInfo(title, description, version, termsOfServiceUrl, 
