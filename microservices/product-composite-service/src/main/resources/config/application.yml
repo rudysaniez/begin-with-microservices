@@ -55,3 +55,20 @@ logging:
     com.me.work.example.microservices.core.composite: DEBUG
     com.me.work.example.handler.http: DEBUG
     
+---
+spring.profiles: product-composite-swagger
+
+api:
+  common:
+    version: 1.0.0
+    title: Product-composite API
+    description: The product-composite API is an example for the API implementation
+    termsOfServiceUrl: MINE TERMS OF SERVICE URL
+    license: License
+    licenseUrl: MY LICENSE URL
+
+    contact:
+      name: Rudy SANIEZ
+      url: https://github.com/rudysaniez
+      email: rudysaniez@laposte.net
+    

@@ -11,6 +11,9 @@ import com.me.work.example.api.core.product.Product;
 import com.me.work.example.api.core.recommendation.Recommendation;
 import com.me.work.example.api.core.review.Review;
 
+/**
+ * @author rudysaniez @since 0.0.1
+ */
 @RestController
 public class ProductCompositeServiceImpl implements ProductCompositeService {
 

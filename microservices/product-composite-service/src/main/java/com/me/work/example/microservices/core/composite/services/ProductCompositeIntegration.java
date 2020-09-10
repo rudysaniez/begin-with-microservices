@@ -27,6 +27,9 @@ import com.me.work.example.handler.http.HttpErrorInfo;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author rudysaniez @since 0.0.1
+ */
 @Slf4j
 @Component
 public class ProductCompositeIntegration implements ProductService, RecommendationService, ReviewService {
