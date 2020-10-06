@@ -1,7 +1,32 @@
 
-server.port: 8083
+---
+spring.profiles: dev
 
 logging:
   level:
     com.me.work.example.microservices.core.review: DEBUG
     com.me.work.example.handler.http: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.cache: DEBUG
+    org.springframework.cache: DEBUG
+    
+spring:
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        
+  datasource:
+    url: jdbc:mysql://localhost:3306/reviewdb?createDatabaseIfNotExist=true
+    username: michael
+    password: jordan
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  liquibase:
+    change-log: classpath:liquibase/create-tables.xml
+    default-schema: reviewdb
+    enabled: true
+    
+server.port: 8083

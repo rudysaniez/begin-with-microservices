@@ -5,6 +5,13 @@ logging:
 
 server.port: 7002
  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,metrics
+      base-path: /management 
+ 
 spring:
   jackson:
     deserialization:
@@ -18,6 +25,14 @@ spring:
     
   webflux:
     base-path: /api/v1
+    
+api:
+  information:
+    version: 1
+    
+  pagination:
+    pageNumber: 0
+    pageSize: 10
 
 ---
 spring.profiles: docker

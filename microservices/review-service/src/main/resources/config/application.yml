@@ -4,7 +4,14 @@ logging:
     root: INFO
 
 server.port: 7003
- 
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,metrics
+      base-path: /management
+
 spring:
   jackson:
     deserialization:
@@ -18,6 +25,34 @@ spring:
     
   webflux:
     base-path: /api/v1
+    
+  jpa:    
+    hibernate:
+      ddl-auto: none
+      
+    show-sql: false
+    
+    properties:
+      hibernate.cache.use_query_cache: true
+      hibernate.cache.use_second_level_cache: true
+      hibernate.cache.region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+            
+      hibernate.javax.cache.provider: org.ehcache.jsr107.EhcacheCachingProvider
+      hibernate.javax.cache.uri: META-INF/ehcache.xml
+      
+      hibernate.generate_statistics: false
+      hibernate.jdbc.wrap_result_sets: true
+      hibernate.jdbc.batch_size: 20
+      hibernate.default_batch_fetch_size: 4
+  
+  cache:
+    jcache:
+      config: classpath:META-INF/ehcache.xml
+    
+api:
+  pagination:
+    default-page-number: 0
+    default-page-size: 10
     
 ---
 spring.profiles: docker

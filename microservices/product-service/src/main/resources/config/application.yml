@@ -5,6 +5,13 @@ logging:
 
 server.port: 7001
  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,metrics
+      base-path: /management 
+
 spring:
   jackson:
     deserialization:
@@ -19,6 +26,11 @@ spring:
   webflux:
     base-path: /api/v1
     
+api:
+  pagination:
+    pageNumber: 0
+    pageSize: 10
+    
 ---
 spring.profiles: docker
 
@@ -28,6 +40,13 @@ logging:
   level:
     com.me.work.example.microservices.core.product: DEBUG
     com.me.work.example.handler.http: DEBUG
+    
+spring:
+  data:
+    mongodb:
+      host: products-db
+      database: productsdb
+      port: 27017
     
 ---
 spring.profiles: product-swagger

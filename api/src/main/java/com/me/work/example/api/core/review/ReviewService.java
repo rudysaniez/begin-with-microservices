@@ -1,27 +1,56 @@
 package com.me.work.example.api.core.review;
 
-import java.util.List;
-
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.me.work.example.api.Api;
+import com.me.work.example.api.core.common.Paged;
 
 public interface ReviewService {
 
 	/**
-	 * @param id
+	 * @param reviewID
 	 * @return {@link Review}
 	 */
-	@GetMapping(value=Api.REVIEW_PATH + "/{id}", produces=MediaType.APPLICATION_JSON_VALUE)
-	public Review getReview(@PathVariable(name="id", required=true) String id);
+	@GetMapping(value=Api.REVIEW_PATH + "/{reviewID}", produces=MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Review> getReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
 	
 	/**
 	 * @param productId
-	 * @return list of {@link Review}
+	 * @param pageNumber
+	 * @param pageSize
+	 * @return page of {@link Review}
 	 */
 	@GetMapping(value=Api.REVIEW_PATH, produces=MediaType.APPLICATION_JSON_VALUE)
-	public List<Review> getReviewByProductId(@RequestParam(name="productId", required=true) String productId);
+	public ResponseEntity<Paged<Review>> getReviewByProductId(@RequestParam(name="productId", required=true) Integer productId,
+			@RequestParam(name="pageNumber", required=false) Integer pageNumber, 
+				@RequestParam(name="pageSize", required=false) Integer pageSize);
+	
+	/**
+	 * @param review
+	 * @return {@link Review}
+	 */
+	@PostMapping(value=Api.REVIEW_PATH, consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Review> save(@RequestBody Review review);
+	
+	/**
+	 * @param review
+	 * @param reviewID
+	 * @return {@link Review}
+	 */
+	@PutMapping(value=Api.REVIEW_PATH + "/{reviewID}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Review> update(@RequestBody Review review, @PathVariable(name="reviewID", required=true) Integer reviewID);
+	
+	/**
+	 * @param reviewID
+	 */
+	@DeleteMapping(value=Api.REVIEW_PATH + "/{reviewID}")
+	public void delete(@PathVariable(name="reviewID", required=true) Integer reviewID);
 }

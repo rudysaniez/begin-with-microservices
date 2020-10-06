@@ -3,31 +3,23 @@ package com.me.work.example.api.core.review;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
+import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@Data
-public class Review {
+@AllArgsConstructor @NoArgsConstructor @Data
+public class Review  {
 
-	private final String reviewID;
+	private Integer reviewID;
 	
 	@Exclude
-	private final String productID;
+	private Integer productID;
 	
 	@Exclude
-	private final String author;
+	private String author;
 	
 	@Exclude
-	private final String subject;
+	private String subject;
 	
 	@Exclude
-	private final String content;
+	private String content;
 	
-	public Review() {
-		
-		this.reviewID = null;
-		this.productID = null;
-		this.author = null;
-		this.subject = null;
-		this.content = null;
-	}
 }

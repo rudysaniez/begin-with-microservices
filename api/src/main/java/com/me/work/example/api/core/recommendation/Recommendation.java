@@ -3,31 +3,22 @@ package com.me.work.example.api.core.recommendation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
+import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@Data
+@AllArgsConstructor @NoArgsConstructor @Data
 public class Recommendation {
 
-	private final String recommendationID;
+	private Integer recommendationID;
 	
 	@Exclude
-	private final String productID;
+	private Integer productID;
 	
 	@Exclude
-	private final String author;
+	private String author;
 	
 	@Exclude
-	private final Integer rate;
+	private Integer rate;
 	
 	@Exclude
-	private final String content;
-	
-	public Recommendation() {
-		
-		this.recommendationID = null;
-		this.productID = null;
-		this.author = null;
-		this.rate = null;
-		this.content = null;
-	}
+	private String content;
 }
