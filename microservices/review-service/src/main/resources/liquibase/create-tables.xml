@@ -52,11 +52,6 @@
 			<column name="REVIEW_ID"/>
 		</createIndex>
 		
-		<createIndex tableName="REVIEW" indexName="IDX_REVIEW_PRODUCT" unique="true">
-			<column name="REVIEW_ID"/>
-			<column name="PRODUCT_ID"/>
-		</createIndex>
-		
 	</changeSet>
          
 </databaseChangeLog>

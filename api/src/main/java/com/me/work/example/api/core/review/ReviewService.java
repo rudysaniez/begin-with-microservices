@@ -29,7 +29,7 @@ public interface ReviewService {
 	 * @return page of {@link Review}
 	 */
 	@GetMapping(value=Api.REVIEW_PATH, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Paged<Review>> getReviewByProductId(@RequestParam(name="productId", required=true) Integer productId,
+	public ResponseEntity<Paged<Review>> getReviewByProductId(@RequestParam(name="productId", required=true) Integer productID,
 			@RequestParam(name="pageNumber", required=false) Integer pageNumber, 
 				@RequestParam(name="pageSize", required=false) Integer pageSize);
 	

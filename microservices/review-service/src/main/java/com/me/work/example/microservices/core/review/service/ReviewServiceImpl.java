@@ -1,8 +1,8 @@
 package com.me.work.example.microservices.core.review.service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
+import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,7 +15,7 @@ import com.me.work.example.api.core.common.PageMetadata;
 import com.me.work.example.api.core.common.Paged;
 import com.me.work.example.api.core.review.Review;
 import com.me.work.example.api.core.review.ReviewService;
-import com.me.work.example.handler.exception.AlreadyExistsException;
+import com.me.work.example.handler.exception.InvalidInputException;
 import com.me.work.example.handler.exception.NotFoundException;
 import com.me.work.example.microservices.core.review.Application.PaginationInformation;
 import com.me.work.example.microservices.core.review.bo.ReviewEntity;
@@ -47,43 +47,34 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public ResponseEntity<Review> getReview(Integer reviewID) {
 		
-		Optional<ReviewEntity> optionalOfReviewEntity = reviewRepository.findByReviewID(reviewID);
+		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0");
 		
-		if(optionalOfReviewEntity.isPresent()) {
+		ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID).
+				orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));
+		
+		log.debug("Review with id={} has been found.", reviewID);
 			
-			if(log.isInfoEnabled()) 
-				log.info(" > Review with id={} has been found.", optionalOfReviewEntity.get().getReviewID());
-			
-			return ResponseEntity.ok(mapper.toModel(optionalOfReviewEntity.get()));
-		}
-		
-		if(log.isDebugEnabled()) log.debug("Review with id={} doesn't not exists.", reviewID);
-		
-		throw new NotFoundException(String.format("The review with id=%d doesn't not exists.", reviewID));
+		return ResponseEntity.ok(mapper.toModel(reviewEntity));
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ResponseEntity<Paged<Review>> getReviewByProductId(Integer productId, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<Paged<Review>> getReviewByProductId(Integer productID, Integer pageNumber, Integer pageSize) {
 		
 		if(pageNumber == null) pageNumber = pagination.getDefaultPageNumber();
 		if(pageSize == null) pageSize = pagination.getDefaultPageSize();
 		
-		Page<ReviewEntity> pageOfReviewEntity = reviewRepository.findByProductID(productId, PageRequest.of(pageNumber, pageSize));
+		if(productID < 1) throw new InvalidInputException("ProductId should be greater than 0");
+		if(pageNumber < 0) throw new InvalidInputException("Page number should be greater or equal than 0");
+		if(pageSize < 1) throw new InvalidInputException("Page size should be greater than 0");
 		
-		if(!pageOfReviewEntity.isEmpty()) {
+		Page<ReviewEntity> pageOfReviewEntity = reviewRepository.findByProductID(productID, PageRequest.of(pageNumber, pageSize));
+		
+		log.debug("{} reviews found by productID={}.", pageOfReviewEntity.getTotalElements(), productID);
 			
-			if(log.isInfoEnabled()) 
-				log.info(" > {} reviews has been found.", pageOfReviewEntity.getContent().size());
-			
-			return ResponseEntity.ok(toPaged(pageOfReviewEntity));
-		}
-		
-		if(log.isDebugEnabled()) log.debug("Reviews with productId={} doesn't not exists.", productId);
-		
-		throw new NotFoundException(String.format("The review with productId=%d doesn't not exists.", productId));
+		return ResponseEntity.ok(toPaged(pageOfReviewEntity));
 	}
 	
 	/**
@@ -92,26 +83,21 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public ResponseEntity<Review> save(Review review) {
 		
-		Optional<ReviewEntity> optOfReviewEntity = reviewRepository.findByReviewIDAndProductID(review.getReviewID(), 
-				review.getProductID());
-		
-		if(optOfReviewEntity.isEmpty()) {
+		try {
 			
-			ReviewEntity toSaved = mapper.toEntity(review);
-			toSaved.setId(null);
-			toSaved.setCreationDate(LocalDateTime.now());
-			toSaved.setUpdateDate(null);
+			ReviewEntity reviewEntity = mapper.toEntity(review);
+			reviewEntity.setCreationDate(LocalDateTime.now());
+			reviewEntity.setUpdateDate(null);
 			
-			toSaved = reviewRepository.save(toSaved);
+			reviewEntity = reviewRepository.save(reviewEntity);
 			
-			return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toModel(toSaved));
+			log.debug("This review has been saved : {}.", mapper.toModel(reviewEntity));
+			
+			return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toModel(reviewEntity));
 		}
-		
-		if(log.isDebugEnabled()) log.debug("Review already exists. Use Verb PUT with the identifier like path variable.");
-		
-		throw new AlreadyExistsException(String.format("This review already exists : %s. "
-				+ "Use Verb PUT with the identifier like path variable.", 
-					optOfReviewEntity.get().toString()));
+		catch(HibernateException e) {
+			throw new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", review.getReviewID()));
+		}
 	}
 
 	/**
@@ -120,40 +106,39 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public ResponseEntity<Review> update(Review review, Integer reviewID) {
 		
-		Optional<ReviewEntity> optOfReview = reviewRepository.findByReviewID(reviewID);
-		
-		if(optOfReview.isPresent()) {
+		try {
 			
-			ReviewEntity toUpdated = optOfReview.get();
-			toUpdated.setAuthor(review.getAuthor());
-			toUpdated.setContent(review.getContent());
-			toUpdated.setSubject(review.getSubject());
-			toUpdated.setUpdateDate(LocalDateTime.now());
+			if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0");
 			
-			toUpdated = reviewRepository.save(toUpdated);
+			ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID).
+					orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));
+				
+			reviewEntity.setAuthor(review.getAuthor());
+			reviewEntity.setContent(review.getContent());
+			reviewEntity.setSubject(review.getSubject());
+			reviewEntity.setUpdateDate(LocalDateTime.now());
 			
-			return ResponseEntity.ok(mapper.toModel(toUpdated));
+			reviewEntity = reviewRepository.save(reviewEntity);
+			
+			log.debug("This review with reviewID={} has been updated : {}.", reviewID, mapper.toModel(reviewEntity));
+			
+			return ResponseEntity.ok(mapper.toModel(reviewEntity));
 		}
-		
-		if(log.isDebugEnabled()) log.debug("Review with id={} doesn't not exists.", reviewID);
-		
-		throw new NotFoundException(String.format("The review with id=%d doesn't not exists. "
-				+ "Use Verb POST for created this review.", reviewID));
+		catch(HibernateException e) {
+			throw new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", review.getReviewID()));
+		}
 	}
 
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
 	public void delete(Integer reviewID) {
 	
-		Optional<ReviewEntity> optOfReview = reviewRepository.findByReviewID(reviewID);
+		ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID).
+				orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));
 		
-		if(optOfReview.isPresent())
-			reviewRepository.delete(optOfReview.get());
-		else {
-			
-			if(log.isDebugEnabled()) log.debug("Review with id={} doesn't not exists.", reviewID);
-			throw new NotFoundException(String.format("Review with id=%d doesn't not exists.", reviewID));
-		}
+		log.debug("This review with reviewID={} has been deleted : {}.", reviewID, mapper.toModel(reviewEntity).toString());
+		
+		reviewRepository.delete(reviewEntity);
 	}
 
 	/**

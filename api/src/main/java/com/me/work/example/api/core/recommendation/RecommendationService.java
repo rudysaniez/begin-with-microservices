@@ -29,7 +29,7 @@ public interface RecommendationService {
 	 * @return page of {@link Recommendation}
 	 */
 	@GetMapping(value=Api.RECOMMENDATION_PATH, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Paged<Recommendation>> getRecommendationByProductId(@RequestParam(name="productId", required=true) Integer productId,
+	public ResponseEntity<Paged<Recommendation>> getRecommendationByProductId(@RequestParam(name="productId", required=true) Integer productID,
 			@RequestParam(name="pageNumber", required=false) Integer pageNumber, 
 				@RequestParam(name="pageSize", required=false) Integer pageSize);
 

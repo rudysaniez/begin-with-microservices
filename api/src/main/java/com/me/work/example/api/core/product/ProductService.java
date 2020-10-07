@@ -46,7 +46,7 @@ public interface ProductService {
 	 * @return {@link Product}
 	 */
 	@PutMapping(value=Api.PRODUCT_PATH + "/{productID}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Product> updated(@RequestBody Product product, @PathVariable(name="productID", required=true) Integer productID);
+	public ResponseEntity<Product> update(@RequestBody Product product, @PathVariable(name="productID", required=true) Integer productID);
 	
 	/**
 	 * @param productID

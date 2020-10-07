@@ -15,7 +15,7 @@
         </expiry>
         <listeners>
             <listener>
-                <class>com.me.work.example.microservices.core.review.repository.cache</class>
+                <class>com.me.work.example.microservices.core.review.repository.cache.CacheLogger</class>
                 <event-firing-mode>ASYNCHRONOUS</event-firing-mode>
                 <event-ordering-mode>UNORDERED</event-ordering-mode>
                 <events-to-fire-on>CREATED</events-to-fire-on>

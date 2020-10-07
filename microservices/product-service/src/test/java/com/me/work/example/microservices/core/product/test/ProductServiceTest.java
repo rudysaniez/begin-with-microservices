@@ -34,7 +34,8 @@ public class ProductServiceTest {
 	@Autowired
 	private ProductMapper mapper;
 	
-	@Value("${spring.webflux.base-path}") String basePath;
+	@Value("${spring.webflux.base-path}") 
+	private String basePath;
 	
 	private static final String PRODUCT_NAME = "marteau vertueux";
 	private static final Integer PRODUCT_ID = 999;

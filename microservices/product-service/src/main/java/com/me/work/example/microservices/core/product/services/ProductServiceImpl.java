@@ -99,7 +99,7 @@ public class ProductServiceImpl implements ProductService {
 			
 			return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toModel(productEntity));
 		}
-		catch (DuplicateKeyException e) {
+		catch(DuplicateKeyException e) {
 			throw new InvalidInputException(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
 					product.getProductID(), product.getName()));
 		}
@@ -109,20 +109,26 @@ public class ProductServiceImpl implements ProductService {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ResponseEntity<Product> updated(Product product, Integer productID) {
+	public ResponseEntity<Product> update(Product product, Integer productID) {
 		
-		ProductEntity productEntity = productRepository.findByProductID(productID).
-				orElseThrow(() -> new NotFoundException(String.format("Product with productID=%d doesn't not exists.", productID)));
-		
-		productEntity.setName(product.getName().toUpperCase());
-		productEntity.setWeight(product.getWeight());
-		productEntity.setUpdateDate(LocalDateTime.now());
-		
-		productEntity = productRepository.save(productEntity);
-		
-		log.debug("This product has been updated : {}.", mapper.toModel(productEntity).toString());
-		
-		return ResponseEntity.ok(mapper.toModel(productEntity));
+		try {
+			
+			ProductEntity productEntity = productRepository.findByProductID(productID).
+					orElseThrow(() -> new NotFoundException(String.format("Product with productID=%d doesn't not exists.", productID)));
+			
+			productEntity.setName(product.getName().toUpperCase());
+			productEntity.setWeight(product.getWeight());
+			productEntity.setUpdateDate(LocalDateTime.now());
+			
+			productEntity = productRepository.save(productEntity);
+			
+			log.debug("This product has been updated : {}.", mapper.toModel(productEntity).toString());
+			
+			return ResponseEntity.ok(mapper.toModel(productEntity));
+		}
+		catch(DuplicateKeyException e) {
+			throw new InvalidInputException(String.format("Duplicate key : check the name (%s) of product.", product.getName()));
+		}
 	}
 
 	/**

@@ -1,7 +1,6 @@
 package com.me.work.example.microservices.core.recommendation.services;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -68,19 +67,19 @@ public class RecommendationServiceImpl implements RecommendationService {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ResponseEntity<Paged<Recommendation>> getRecommendationByProductId(Integer productId, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<Paged<Recommendation>> getRecommendationByProductId(Integer productID, Integer pageNumber, Integer pageSize) {
 
 		if(pageNumber == null) pageNumber = pagination.getPageNumber();
 		if(pageSize == null) pageSize = pagination.getPageSize();
 		
-		if(productId < 1) throw new InvalidInputException("ProductID should be greater than 0");
+		if(productID < 1) throw new InvalidInputException("ProductId should be greater than 0");
 		if(pageNumber < 0) throw new InvalidInputException("Page number should be greater or equal than 0");
 		if(pageSize < 1) throw new InvalidInputException("Page size should be greater than 0");
 		
-		Page<RecommendationEntity> pageOfRecommendation = recommendationRepository.findByProductID(productId, 
+		Page<RecommendationEntity> pageOfRecommendation = recommendationRepository.findByProductID(productID, 
 				PageRequest.of(pageNumber, pageSize));
 		
-		log.debug("{} recommendations found by productID={}.", pageOfRecommendation.getTotalElements(), productId);
+		log.debug("{} recommendations found by productID={}.", pageOfRecommendation.getTotalElements(), productID);
 		
 		return ResponseEntity.ok(toPaged(pageOfRecommendation));
 	}
@@ -128,6 +127,8 @@ public class RecommendationServiceImpl implements RecommendationService {
 			
 			recommendationEntity = recommendationRepository.save(recommendationEntity);
 			
+			log.debug("This recommendation has been updated : {}.", mapper.toModel(recommendationEntity));
+			
 			return ResponseEntity.ok(mapper.toModel(recommendationEntity));
 			
 		}
@@ -143,12 +144,15 @@ public class RecommendationServiceImpl implements RecommendationService {
 	@Override
 	public void delete(Integer recommendationID) {
 		
-		Optional<RecommendationEntity> optOfRecommendation = recommendationRepository.findByRecommendationID(recommendationID);
+		if(recommendationID < 1) throw new InvalidInputException("RecommendationID should be greater than 0");
 		
-		if(optOfRecommendation.isPresent())
-			recommendationRepository.delete(optOfRecommendation.get());
-		else
-			throw new NotFoundException(String.format("The recommendation with ID=%d doesn't not exists.", recommendationID));
+		RecommendationEntity recommendationEntity = recommendationRepository.findByRecommendationID(recommendationID).
+				orElseThrow(() -> new NotFoundException(String.format("The recommendation with recommendationID=%d doesn't not exists.", recommendationID)));
+		
+		log.debug("This recommendation with recommendationID={} has been deleted : {}.", recommendationID, 
+				mapper.toModel(recommendationEntity).toString());
+		
+		recommendationRepository.delete(recommendationEntity);
 	}
 	
 	/**

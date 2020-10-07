@@ -1,11 +1,11 @@
 package com.me.work.example.microservices.core.review.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,11 +15,12 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.me.work.example.microservices.core.review.TestingInitialization;
+import com.me.work.example.handler.exception.NotFoundException;
 import com.me.work.example.microservices.core.review.bo.ReviewEntity;
 import com.me.work.example.microservices.core.review.repository.ReviewRepository;
 
@@ -33,45 +34,51 @@ public class ReviewDataTest {
 	@Autowired
 	private ReviewRepository reviewRepository;
 	
+	private ReviewEntity savedReview;
+	
+	private static final Integer REVIEW_ID = 1;
+	private static final Integer PRODUCT_ID = 1;
 	private static final String SUBJECT = "Washing machine";
 	private static final String CONTENT = "Good product. The installation is simply.";
+	private static final String AUTHOR = "rudysaniez";
 	
-	private static Integer ID = null;
+	private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
+	private static final Pageable DEFAULT_PAGE = PageRequest.of(0, 5);
 	
 	@Before
 	public void before() {
 		
-		ReviewEntity re = new ReviewEntity();
-		re.setAuthor("rudysaniez");
-		re.setContent(CONTENT);
-		re.setProductID(1);
-		re.setReviewID(1);
-		re.setSubject(SUBJECT);
-		re.setCreationDate(LocalDateTime.now());
+		ReviewEntity reviewEntity = new ReviewEntity();
+		reviewEntity.setAuthor(AUTHOR);
+		reviewEntity.setContent(CONTENT);
+		reviewEntity.setProductID(PRODUCT_ID);
+		reviewEntity.setReviewID(REVIEW_ID);
+		reviewEntity.setSubject(SUBJECT);
+		reviewEntity.setCreationDate(LocalDateTime.now());
 		
-		re = reviewRepository.save(re);
+		savedReview = reviewRepository.save(reviewEntity);
 		
-		assertThat(re.getId()).isNotNull();
-		
-		ID = re.getId();
+		assertNotNull(savedReview.getId());
+		assertEqualsReview(savedReview, reviewEntity);
 	}
 	
 	@Test
-	public void test() {
+	public void getReviewByProductID() {
 		
-		Page<ReviewEntity> pageOfReview = reviewRepository.findByProductID(1, PageRequest.of(0, 10));
-		assertThat(pageOfReview).isNotEmpty();
-		assertThat(pageOfReview.getContent().get(0).getSubject()).isEqualTo(SUBJECT);
-		assertThat(pageOfReview.getContent().get(0).getContent()).isEqualTo(CONTENT);
+		Page<ReviewEntity> pageOfReview = reviewRepository.findByProductID(PRODUCT_ID, DEFAULT_PAGE);
+		assertEqualsReview(savedReview, pageOfReview.get().findFirst().orElseThrow(() -> new NotFoundException()));
 	}
 	
-	@After
-	public void after() {
+	public void assertEqualsReview(ReviewEntity expectedReview, ReviewEntity actualReview) {
 		
-		Optional<ReviewEntity> optOfReview = reviewRepository.findById(ID);
-		assertThat(optOfReview.isPresent()).isTrue();
-		
-		Optional<ReviewEntity> pageOfReview = reviewRepository.findByReviewID(TestingInitialization.DEFAULT_REVIEW_ID);
-		assertThat(pageOfReview.isPresent()).isTrue();
+		assertEquals(expectedReview.getContent(), actualReview.getContent());
+		assertEquals(expectedReview.getAuthor(), actualReview.getAuthor());
+		assertEquals(expectedReview.getProductID(), actualReview.getProductID());
+		assertEquals(expectedReview.getReviewID(), actualReview.getReviewID());
+		assertEquals(expectedReview.getSubject(), actualReview.getSubject());
+	}
+	
+	public void assertEqualsDate(LocalDateTime expected, LocalDateTime actual) {
+		assertEquals(FORMATTER.format(expected), FORMATTER.format(actual));
 	}
 }
