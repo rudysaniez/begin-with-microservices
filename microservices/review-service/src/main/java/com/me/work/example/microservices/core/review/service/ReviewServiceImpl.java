@@ -2,8 +2,8 @@ package com.me.work.example.microservices.core.review.service;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.HibernateException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -33,8 +33,7 @@ public class ReviewServiceImpl implements ReviewService {
 	private final PaginationInformation pagination;
 	
 	@Autowired
-	public ReviewServiceImpl(ReviewRepository reviewRepository, ReviewMapper mapper, 
-			PaginationInformation pagination) {
+	public ReviewServiceImpl(ReviewRepository reviewRepository, ReviewMapper mapper, PaginationInformation pagination) {
 		
 		this.reviewRepository = reviewRepository;
 		this.mapper = mapper;
@@ -95,7 +94,7 @@ public class ReviewServiceImpl implements ReviewService {
 			
 			return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toModel(reviewEntity));
 		}
-		catch(HibernateException e) {
+		catch(DataIntegrityViolationException e) {
 			throw new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", review.getReviewID()));
 		}
 	}
@@ -124,7 +123,7 @@ public class ReviewServiceImpl implements ReviewService {
 			
 			return ResponseEntity.ok(mapper.toModel(reviewEntity));
 		}
-		catch(HibernateException e) {
+		catch(DataIntegrityViolationException e) {
 			throw new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", review.getReviewID()));
 		}
 	}

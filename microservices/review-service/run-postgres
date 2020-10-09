@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e 
+
+docker run --name psql-review -p 5432:5432 --detach -e POSTGRES_USER="michael" -e POSTGRES_PASSWORD="jordan" -e POSTGRES_DB="reviewdb" postgres:latest

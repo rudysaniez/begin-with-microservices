@@ -25,5 +25,5 @@ public interface ProductMapper {
 			@Mapping(target="version", ignore=true), 
 			@Mapping(target="id", ignore=true)
 	})
-	public ProductEntity toBusinessObject(Product product);
+	public ProductEntity toEntity(Product product);
 }

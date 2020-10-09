@@ -25,7 +25,7 @@ public class MapperTest {
 		assertEquals(productEntity.getProductID(), product.getProductID());
 		assertEquals(productEntity.getWeight(), product.getWeight());
 		
-		productEntity = mapper.toBusinessObject(product);
+		productEntity = mapper.toEntity(product);
 		assertEquals(productEntity.getName(), product.getName());
 		assertEquals(productEntity.getProductID(), product.getProductID());
 		assertEquals(productEntity.getWeight(), product.getWeight());

@@ -16,6 +16,7 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 	 * @param reviewID
 	 * @return optional of {@link ReviewEntity}
 	 */
+	@Transactional(readOnly=true)
 	public Optional<ReviewEntity> findByReviewID(Integer reviewID);
 	
 	/**
@@ -23,6 +24,7 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 	 * @param page
 	 * @return page of {@link ReviewEntity}
 	 */
+	@Transactional(readOnly=true)
 	public Page<ReviewEntity> findByProductID(Integer productID, Pageable page);
 	
 	/**
@@ -30,5 +32,6 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 	 * @param productID
 	 * @return optional of {@link ReviewEntity}
 	 */
+	@Transactional(readOnly=true)
 	public Optional<ReviewEntity> findByReviewIDAndProductID(Integer reviewID, Integer productID);
 }

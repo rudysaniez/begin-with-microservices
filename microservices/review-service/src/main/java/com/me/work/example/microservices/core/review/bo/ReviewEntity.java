@@ -12,11 +12,10 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor @NoArgsConstructor @Data
+@NoArgsConstructor @Data
 @Entity
 @Table(name="REVIEW", catalog="reviewdb")
 public class ReviewEntity implements Serializable {
@@ -54,4 +53,21 @@ public class ReviewEntity implements Serializable {
 	private LocalDateTime updateDate;
 	
 	private static final long serialVersionUID = 1L;
+	
+	/**
+	 * @param reviewID
+	 * @param productID
+	 * @param author
+	 * @param subject
+	 * @param content
+	 */
+	public ReviewEntity(Integer reviewID, Integer productID, String author, String subject, String content) {
+		
+		this.reviewID = reviewID;
+		this.productID = productID;
+		this.author = author;
+		this.subject = subject;
+		this.content = content;
+		this.creationDate = LocalDateTime.now();
+	}
 }

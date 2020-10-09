@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
 		
 		try {
 			
-			ProductEntity productEntity = mapper.toBusinessObject(product);
+			ProductEntity productEntity = mapper.toEntity(product);
 			productEntity.setName(product.getName().toUpperCase());
 			productEntity.setCreationDate(LocalDateTime.now());
 			

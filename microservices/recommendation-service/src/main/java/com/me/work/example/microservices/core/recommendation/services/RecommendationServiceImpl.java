@@ -92,7 +92,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 			
 		try {
 			
-			RecommendationEntity recommendationEntity = mapper.toBusinessObject(recommendation);
+			RecommendationEntity recommendationEntity = mapper.toEntity(recommendation);
 			recommendationEntity.setCreationDate(LocalDateTime.now());
 			
 			recommendationEntity = recommendationRepository.save(recommendationEntity);

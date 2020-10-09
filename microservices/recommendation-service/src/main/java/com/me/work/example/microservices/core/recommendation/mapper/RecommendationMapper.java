@@ -14,15 +14,15 @@ public interface RecommendationMapper {
 	 * @param recommendation
 	 * @return {@link RecommendationEntity}
 	 */
-	public RecommendationEntity toBusinessObject(Recommendation recommendation);
+	@Mappings(value= {
+			@Mapping(target="version", ignore=true),
+			@Mapping(target="id", ignore=true)
+	})
+	public RecommendationEntity toEntity(Recommendation recommendation);
 	
 	/**
 	 * @param recommendation
 	 * @return {@link RecommendationEntity}
 	 */
-	@Mappings(value= {
-			@Mapping(target="version", ignore=true),
-			@Mapping(target="id", ignore=true)
-	})
 	public Recommendation toModel(RecommendationEntity recommendation);
 }

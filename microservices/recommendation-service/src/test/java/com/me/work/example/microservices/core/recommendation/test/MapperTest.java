@@ -25,7 +25,7 @@ public class MapperTest {
 		assertEquals(model.getRecommendationID(), entity.getRecommendationID());
 		assertEquals(model.getProductID(), entity.getProductID());
 		
-		entity = mapper.toBusinessObject(model);
+		entity = mapper.toEntity(model);
 		
 		assertEquals(entity.getContent(), model.getContent());
 		assertEquals(entity.getAuthor(), model.getAuthor());
