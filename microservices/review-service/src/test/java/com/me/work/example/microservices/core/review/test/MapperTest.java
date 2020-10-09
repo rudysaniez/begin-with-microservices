@@ -28,5 +28,13 @@ public class MapperTest {
 		assertEquals(entity.getReviewID(), review.getReviewID());
 		assertEquals(entity.getSubject(), review.getSubject());
 		assertEquals(formatter.format(entity.getCreationDate()), formatter.format(review.getCreationDate()));
+		
+		entity = mapper.toEntity(review);
+		assertEquals(entity.getContent(), review.getContent());
+		assertEquals(entity.getAuthor(), review.getAuthor());
+		assertEquals(entity.getSubject(), review.getSubject());
+		assertEquals(entity.getProductID(), review.getProductID());
+		assertEquals(entity.getReviewID(), review.getReviewID());
+		assertEquals(formatter.format(entity.getCreationDate()), formatter.format(review.getCreationDate()));
 	}
 }
