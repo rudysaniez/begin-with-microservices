@@ -128,9 +128,12 @@ public class ReviewServiceImpl implements ReviewService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public void delete(Integer reviewID) {
+	public void deleteReview(Integer reviewID) {
 	
 		ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID).
 				orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));

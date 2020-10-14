@@ -43,6 +43,13 @@ logging:
   level:
     com.me.work.example.microservices.core.recommendation: DEBUG
     com.me.work.example.handler.http: DEBUG
+
+spring:
+  data:
+    mongodb:
+      host: products-db
+      database: productsdb
+      port: 27017
     
 ---
 spring.profiles: recommendation-swagger

@@ -3,12 +3,21 @@ package com.me.work.example.microservices.core.composite;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.client.RestTemplate;
 
+import com.me.work.example.microservices.core.composite.mapper.RecommendationMapper;
+import com.me.work.example.microservices.core.composite.mapper.RecommendationMapperImpl;
+import com.me.work.example.microservices.core.composite.mapper.ReviewMapper;
+import com.me.work.example.microservices.core.composite.mapper.ReviewMapperImpl;
+
+import lombok.Getter;
+import lombok.Setter;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -17,6 +26,7 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+@EnableConfigurationProperties(value=Application.PaginationInformation.class)
 @ComponentScan(basePackages= {"com.me.work.example.microservices.core", "com.me.work.example.handler.http"})
 @SpringBootApplication
 public class Application {
@@ -32,6 +42,24 @@ public class Application {
 	@Bean
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
+	}
+	
+	@Bean
+	public RecommendationMapper recommendationMapper() {
+		return new RecommendationMapperImpl();
+	}
+	
+	@Bean
+	public ReviewMapper reviewMapper() {
+		return new ReviewMapperImpl();
+	}
+	
+	@Getter @Setter
+	@ConfigurationProperties(prefix="api.pagination")
+	public static class PaginationInformation {
+		
+		private int pageNumber;
+		private int pageSize;
 	}
 	
 	/**

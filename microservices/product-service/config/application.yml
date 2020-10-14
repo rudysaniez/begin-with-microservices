@@ -1,8 +1,7 @@
 
-server.port: 8081
-
 logging:
   level:
+    root: INFO
     com.me.work.example.microservices.core.product: DEBUG
     com.me.work.example.handler.http: DEBUG
     
@@ -15,3 +14,5 @@ spring:
       host: localhost
       database: productsdb
       port: 27017
+      
+server.port: 8081

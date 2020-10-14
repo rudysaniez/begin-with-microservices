@@ -52,5 +52,5 @@ public interface RecommendationService {
 	 * @param recommendationID
 	 */
 	@DeleteMapping(value=Api.RECOMMENDATION_PATH + "/{recommendationID}")
-	public void delete(@PathVariable(name="recommendationID", required=true) Integer recommendationID);
+	public void deleteRecommendation(@PathVariable(name="recommendationID", required=true) Integer recommendationID);
 }

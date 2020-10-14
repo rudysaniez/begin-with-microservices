@@ -136,7 +136,7 @@ public class ProductServiceImpl implements ProductService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public void delete(Integer productID) {
+	public void deleteProduct(Integer productID) {
 
 		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0");
 		

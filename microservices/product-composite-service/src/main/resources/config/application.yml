@@ -32,6 +32,10 @@ spring:
   webflux:
     base-path: /api/v1
     
+api.pagination:
+  page-number: 0
+  page-size: 20
+    
 ---
 spring.profiles: docker
 

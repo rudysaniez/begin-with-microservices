@@ -2,12 +2,11 @@ package com.me.work.example.api.core.review;
 
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor @NoArgsConstructor @Data
+@NoArgsConstructor @Data
 public class Review  {
 
 	private Integer reviewID;
@@ -29,4 +28,22 @@ public class Review  {
 	
 	@Exclude
 	private LocalDateTime updateDate;
+	
+	/**
+	 * @param reviewID
+	 * @param productID
+	 * @param author
+	 * @param subject
+	 * @param content
+	 */
+	public Review(Integer reviewID, Integer productID, String author, String subject, String content) {
+		
+		this.reviewID = reviewID;
+		this.productID = productID;
+		this.author = author;
+		this.subject = subject;
+		this.content = content;
+		this.creationDate = LocalDateTime.now();
+		this.updateDate = null;
+	}
 }

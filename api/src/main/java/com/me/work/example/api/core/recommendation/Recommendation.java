@@ -2,17 +2,15 @@ package com.me.work.example.api.core.recommendation;
 
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor @NoArgsConstructor @Data
+@NoArgsConstructor @Data
 public class Recommendation {
 
 	private Integer recommendationID;
 	
-	@Exclude
 	private Integer productID;
 	
 	@Exclude
@@ -29,4 +27,22 @@ public class Recommendation {
 	
 	@Exclude
 	private LocalDateTime updateDate;
-}
+	
+	/**
+	 * @param recommendationID
+	 * @param productID
+	 * @param author
+	 * @param rate
+	 * @param content
+	 */
+	public Recommendation(Integer recommendationID, Integer productID, String author, Integer rate, String content) {
+		
+		this.recommendationID = recommendationID;
+		this.productID = productID;
+		this.author = author;
+		this.rate = rate;
+		this.content = content;
+		this.creationDate = LocalDateTime.now();
+		this.updateDate = null;
+	}
+ }

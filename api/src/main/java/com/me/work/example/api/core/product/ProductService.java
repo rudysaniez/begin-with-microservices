@@ -52,5 +52,5 @@ public interface ProductService {
 	 * @param productID
 	 */
 	@DeleteMapping(value=Api.PRODUCT_PATH + "/{productID}")
-	public void delete(@PathVariable(name="productID", required=true) Integer productID);
+	public void deleteProduct(@PathVariable(name="productID", required=true) Integer productID);
 }

@@ -142,7 +142,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public void delete(Integer recommendationID) {
+	public void deleteRecommendation(Integer recommendationID) {
 		
 		if(recommendationID < 1) throw new InvalidInputException("RecommendationID should be greater than 0");
 		
