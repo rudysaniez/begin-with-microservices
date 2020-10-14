@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.me.work.example.api.core.common.PageMetadata;
 import com.me.work.example.api.core.common.Paged;
 import com.me.work.example.api.core.composite.ProductAggregate;
 import com.me.work.example.api.core.composite.ProductComposite;
@@ -99,20 +98,44 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 	@Override
 	public void deleteCompositeProduct(Integer productID) {
 		
-		ResponseEntity<ProductAggregate> product = getCompositeProduct(productID, 0, 20);
+		int currentPage = 0;
+		int pageSize = 20;
 		
-		PageMetadata page = product.getBody().getRecommendations().getPage(); int i = 0;
+		/**
+		 * Recommendations.
+		 */
+		ResponseEntity<Paged<Recommendation>> recommendations = integration.getRecommendationByProductId(productID, currentPage, pageSize);
+		long totalPages = recommendations.getBody().getPage().getTotalPages();
+		
 		do {
-			product.getBody().getRecommendations().getContent().forEach(r -> integration.deleteRecommendation(r.getRecommendationID()));
-			i++;
-		}while(i < page.getTotalPages());
+			
+			recommendations.getBody().getContent().forEach(r -> integration.deleteRecommendation(r.getRecommendationID()));
+			currentPage++;
+			
+			if(currentPage < totalPages)
+				recommendations = integration.getRecommendationByProductId(productID, currentPage, pageSize);
+			
+		}while(currentPage < totalPages);
 		
-		page = product.getBody().getReviews().getPage(); i = 0;
+		/**
+		 * Reviews.
+		 */
+		ResponseEntity<Paged<Review>> reviews = integration.getReviewByProductId(productID, currentPage, pageSize);
+		totalPages = reviews.getBody().getPage().getTotalPages(); currentPage = 0;
+		
 		do {
-			product.getBody().getReviews().getContent().forEach(r -> integration.deleteReview(r.getReviewID()));
-			i++;
-		}while(i < page.getTotalPages());
+			
+			reviews.getBody().getContent().forEach(r -> integration.deleteReview(r.getReviewID()));
+			currentPage++;
+			
+			if(currentPage < totalPages)
+				reviews = integration.getReviewByProductId(productID, currentPage, pageSize);
+			
+		}while(currentPage < totalPages);
 		
+		/**
+		 * Product.
+		 */
 		integration.deleteProduct(productID);
 	}
 	

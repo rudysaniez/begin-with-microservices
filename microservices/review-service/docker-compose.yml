@@ -1,0 +1,34 @@
+
+version: "2.1"
+  
+services:
+
+  reviews-db:
+    image: mysql:latest
+    container_name: reviews-db
+    mem_limit: 350m
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=welcome
+      - MYSQL_USER=michael
+      - MYSQL_PASSWORD=jordan
+      - MYSQL_DATABASE=reviewdb
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-umichael", "-pjordan", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    
+  review:
+    build: .
+    mem_limit: 600M
+    ports:
+      - 8083:8083
+    depends_on: 
+      reviews-db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,review-swagger
+      - JAVA_OPTS=-Xms512M -Xmx512M
+      
