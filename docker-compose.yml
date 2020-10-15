@@ -1,58 +1,66 @@
 
-version: "3.8"
+version: "2.1"
   
 services:
   
+  products-db:
+    image: mongo:3.2.4
+    container_name: products-db
+    mem_limit: 350m
+    ports:
+      - 27017:27017
+    command: --smallfiles
+  
+  reviews-db:
+    image: mysql:latest
+    container_name: reviews-db
+    mem_limit: 350m
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=welcome
+      - MYSQL_USER=michael
+      - MYSQL_PASSWORD=jordan
+      - MYSQL_DATABASE=reviewdb
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-umichael", "-pjordan", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    
   product:
     build: microservices/product-service
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 250M
-        reservations:
-          cpus: '0.25'
-          memory: 150M
+    mem_limit: 350M
+    depends_on:
+      - products-db
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xms256M -Xmx256M
       
   recommendation:
     build: microservices/recommendation-service
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 250M
-        reservations:
-          cpus: '0.25'
-          memory: 150M
+    mem_limit: 350M
+    depends_on:
+      - products-db
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xms256M -Xmx256M
       
   review:
     build: microservices/review-service
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 250M
-        reservations:
-          cpus: '0.25'
-          memory: 150M
+    mem_limit: 350M
+    depends_on:
+      reviews-db:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_OPTS=-Xms256M -Xmx256M
       
   product-composite:
     build: microservices/product-composite-service
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 250M
-        reservations:
-          cpus: '0.25'
-          memory: 150M
+    mem_limit: 350M
     ports:
-      - "8081:8081"
+      - "9080:9080"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,product-composite-swagger
+      - JAVA_OPTS=-Xms256M -Xmx256M

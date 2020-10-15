@@ -3,7 +3,9 @@ package com.me.work.example.microservices.core.composite.services;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.me.work.example.api.core.common.Paged;
@@ -63,6 +65,7 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 	/**
 	 * {@inheritDoc}
 	 */
+	@ResponseStatus(value=HttpStatus.CREATED)
 	@Override
 	public void createCompositeProduct(ProductComposite body) {
 
@@ -76,7 +79,6 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 					model.setProductID(body.getProductID());
 					integration.save(model);
 				});
-			
 			
 			if(body.getReviews() != null)
 				body.getReviews().forEach(rs -> {
@@ -95,11 +97,12 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 	/**
 	 * {@inheritDoc}
 	 */
+	@ResponseStatus(value=HttpStatus.OK)
 	@Override
 	public void deleteCompositeProduct(Integer productID) {
 		
-		int currentPage = 0;
-		int pageSize = 20;
+		int currentPage = pagination.getPageNumber();
+		int pageSize = pagination.getPageSize();
 		
 		/**
 		 * Recommendations.
@@ -117,11 +120,13 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 			
 		}while(currentPage < totalPages);
 		
+		currentPage = 0;
+		
 		/**
 		 * Reviews.
 		 */
 		ResponseEntity<Paged<Review>> reviews = integration.getReviewByProductId(productID, currentPage, pageSize);
-		totalPages = reviews.getBody().getPage().getTotalPages(); currentPage = 0;
+		totalPages = reviews.getBody().getPage().getTotalPages();
 		
 		do {
 			

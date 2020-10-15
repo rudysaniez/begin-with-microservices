@@ -106,7 +106,6 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 		this.recommendationServiceUrl = sb.toString();
 		log.debug("L'URL du service recommendation : " + this.recommendationServiceUrl);
 		
-		
 		//Review-service
 		sb = new StringBuilder("http://");
 		sb.append(reviewServiceHost).append(":").append(reviewServicePort).append(basePath).
@@ -114,7 +113,6 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 		
 		this.reviewServiceUrl = sb.toString();
 		log.debug("L'URL du service review : " + this.reviewServiceUrl);
-		
 	}
 	
 	/**
@@ -124,6 +122,9 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public ResponseEntity<Product> getProduct(Integer id) {
 		
 		try {
+			
+			log.debug("Call product services ({}) : {} - path variable : {}", HttpMethod.GET.name(), productServiceUrl, id);
+			
 			return restTemplate.getForEntity(this.productServiceUrl + "/" + id, Product.class);
 		}
 		catch(HttpClientErrorException e) {
@@ -147,6 +148,9 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 			if(pageNumber != null) 	params.append("&pageNumber=").append(pageNumber);
 			if(pageSize != null)	params.append("&pageSize=").append(pageSize);
 			
+			log.debug("Call product services ({}) : {} - parameters : {}", HttpMethod.GET.name(), productServiceUrl, 
+					params.toString());
+			
 			return restTemplate.exchange(productServiceUrl + params.toString(), HttpMethod.GET, null, 
 					new ParameterizedTypeReference<Paged<Product>>() {});
 		}
@@ -164,6 +168,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public ResponseEntity<Product> save(Product product) {
 		
 		try {
+			
+			log.debug("Call product services ({}) : {} - body : {}", HttpMethod.POST.name(), productServiceUrl, 
+					product.toString());
+			
 			return restTemplate.exchange(productServiceUrl, HttpMethod.POST, new HttpEntity<>(product), Product.class);
 		}
 		catch(HttpClientErrorException e) {
@@ -172,7 +180,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 			throw handleHttpClientException(e);
 		}
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -180,6 +188,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public ResponseEntity<Product> update(Product product, Integer productID) {
 		
 		try {
+			
+			log.debug("Call product services ({}) : {} - body : {} - path variable : {}", HttpMethod.PUT.name(), 
+					productServiceUrl, product.toString(), productID);
+			
 			return restTemplate.exchange(productServiceUrl + "/" + productID, HttpMethod.PUT, new HttpEntity<>(product), Product.class);
 		}
 		catch(HttpClientErrorException e) {
@@ -196,6 +208,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public void deleteProduct(Integer productID) {
 		
 		try {
+			
+			log.debug("Call product services ({}) : {} - path variable : {}", HttpMethod.DELETE.name(), productServiceUrl, 
+					productID);
+			
 			restTemplate.delete(productServiceUrl + "/" + productID);
 		}
 		catch(HttpClientErrorException e) {
@@ -209,12 +225,17 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ResponseEntity<Review> getReview(Integer id) {
+	public ResponseEntity<Review> getReview(Integer reviewID) {
 		
 		try {
-			return this.restTemplate.getForEntity(reviewServiceUrl + "/" + id, Review.class);
+			
+			log.debug("Call review services ({}) : {} - path variable : {}", HttpMethod.GET.name(), reviewServiceUrl, 
+					reviewID);
+			
+			return this.restTemplate.getForEntity(reviewServiceUrl + "/" + reviewID, Review.class);
 		}
 		catch(HttpClientErrorException e) {
+			
 			log.error(e.getMessage(), e);
 			throw handleHttpClientException(e);
 		}
@@ -234,7 +255,8 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 			if(pageNumber != null) 	params.append("&pageNumber=").append(pageNumber);
 			if(pageSize != null)	params.append("&pageSize=").append(pageSize);
 			
-			log.debug("Call review services : {} - with parameters : {}", reviewServiceUrl, params.toString());
+			log.debug("Call review services ({}) : {} - parameters : {}", HttpMethod.GET.name(), reviewServiceUrl, 
+					params.toString());
 			
 			ResponseEntity<Paged<Review>> result =  restTemplate.exchange(reviewServiceUrl + params.toString(), HttpMethod.GET, 
 					null, new ParameterizedTypeReference<Paged<Review>>() {});  
@@ -255,6 +277,9 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public ResponseEntity<Review> save(Review review) {
 		
 		try {
+			
+			log.debug("Call review services ({}) : {} - body : {}", HttpMethod.POST.name(), reviewServiceUrl, review.toString());
+			
 			return restTemplate.postForEntity(reviewServiceUrl, review, Review.class);
 		}
 		catch(HttpClientErrorException e) {
@@ -271,6 +296,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public ResponseEntity<Review> update(Review review, Integer reviewID) {
 		
 		try {
+			
+			log.debug("Call review services ({}) : {} - body : {} - path variable : {}", HttpMethod.PUT.name(), 
+					reviewServiceUrl, review.toString(), reviewID);
+			
 			return restTemplate.exchange(reviewServiceUrl + "/" + reviewID, HttpMethod.PUT, new HttpEntity<>(review), Review.class);
 		}
 		catch(HttpClientErrorException e) {
@@ -287,6 +316,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public void deleteReview(Integer reviewID) {
 		
 		try {
+			
+			log.debug("Call review services ({}) : {} - path variable : {}", HttpMethod.DELETE.name(), 
+					reviewServiceUrl, reviewID);
+			
 			restTemplate.delete(reviewServiceUrl + "/" + reviewID);
 		}
 		catch(HttpClientErrorException e) {
@@ -303,6 +336,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public ResponseEntity<Recommendation> getRecommendation(Integer recommendationID) {
 		
 		try {
+			
+			log.debug("Call recommendation services ({}) : {} - path variable : {}", HttpMethod.GET.name(), 
+					recommendationServiceUrl, recommendationID);
+			
 			return this.restTemplate.getForEntity(recommendationServiceUrl + "/" + recommendationID, Recommendation.class);
 		}
 		catch(HttpClientErrorException e) {
@@ -326,6 +363,9 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 			if(pageNumber != null) 	params.append("&pageNumber=").append(pageNumber);
 			if(pageSize != null)	params.append("&pageSize=").append(pageSize);
 			
+			log.debug("Call recommendation services ({}) : {} - parameters : {}", HttpMethod.GET.name(), recommendationServiceUrl, 
+					params.toString());
+			
 			return restTemplate.exchange(recommendationServiceUrl + params.toString(), HttpMethod.GET, 
 					null, new ParameterizedTypeReference<Paged<Recommendation>>() {});
 		}
@@ -343,6 +383,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public ResponseEntity<Recommendation> save(Recommendation recommendation) {
 		
 		try {
+			
+			log.debug("Call recommendation services ({}) : {} - body : {}", HttpMethod.POST.name(), recommendationServiceUrl, 
+					recommendation.toString());
+			
 			return restTemplate.postForEntity(recommendationServiceUrl, recommendation, Recommendation.class);
 		}
 		catch(HttpClientErrorException e) {
@@ -360,8 +404,11 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 		
 		try {
 			
-			HttpEntity<Recommendation> entity = new HttpEntity<Recommendation>(recommendation);
-			return restTemplate.exchange(recommendationServiceUrl + "/" + recommendationID, HttpMethod.PUT, entity, Recommendation.class);
+			log.debug("Call recommendation services ({}) : {} - body : {} - path variable : {}", HttpMethod.PUT.name(), 
+					recommendationServiceUrl, recommendation.toString(), recommendationID);
+			
+			return restTemplate.exchange(recommendationServiceUrl + "/" + recommendationID, HttpMethod.PUT, 
+					new HttpEntity<Recommendation>(recommendation), Recommendation.class);
 		}
 		catch(HttpClientErrorException e) {
 			
@@ -377,6 +424,10 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	public void deleteRecommendation(Integer recommendationID) {
 		
 		try {
+			
+			log.debug("Call recommendation services ({}) : {} - path variable : {}", HttpMethod.DELETE.name(), 
+					recommendationServiceUrl, recommendationID);
+			
 			restTemplate.delete(recommendationServiceUrl + "/" + recommendationID);
 		}
 		catch(HttpClientErrorException e) {
