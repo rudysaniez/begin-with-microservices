@@ -18,6 +18,13 @@ app:
     host: localhost
     port: 7003
  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,metrics
+      base-path: /management 
+
 spring:
   jackson:
     deserialization:

@@ -5,7 +5,7 @@ cat test-banner.txt
 echo ""
 
 : ${HOST=localhost}
-: ${PORT=8081}
+: ${PORT=9080}
 
 
 function assertCurl() {
@@ -18,7 +18,7 @@ function assertCurl() {
 
   if [ "$httpCode" = "$expectedHttpCode" ]
   then
-    if [ "$httpCode" = "200" ]
+    if [ "$httpCode" = "200" -o "$httpCode" = "201" ]
     then
       echo "Test OK (HTTP Code: $httpCode, description=$3)"
     else
@@ -100,7 +100,7 @@ function waitForService() {
             echo " Give up"
             exit 1
         else
-            sleep 6
+            sleep 15
             echo -n ", retry #$n "
         fi
     done
@@ -117,19 +117,22 @@ then
 fi
 
 
-waitForService http://$HOST:$PORT/api/v1/products-composite/1
+waitForService http://$HOST:$PORT/api/v1/management/info
+
+#assertCurl 201 "curl -X POST -H \"Content-Type: application/json\" -d '{\"productID\":1,\"name\":\"panneau_solaire\",\"weight\":1,\"recommendations\":[{\"recommendationID\":1,\"author\":\"rudysaniez\",\"rate\":1,\"content\":\"Good product!\"}],\"reviews\":[{\"reviewID\":1,\"author\":\"rudysaniez\",\"subject\":\"My opinion\",\"content\":\"Beautiful! it works\"}]}' \"http://$HOST:$PORT/api/v1/products-composite\" -s " "Product-composite creation"
+assertCurl 201 "curl -X POST -H \"Content-Type: application/json\" -d '{\"productID\":1,\"name\":\"panneau_solaire\",\"weight\":1,\"recommendations\":[{\"recommendationID\":1,\"author\":\"rudysaniez\",\"rate\":1,\"content\":\"Good product!\"}]}' \"http://$HOST:$PORT/api/v1/products-composite\" -s " "Product-composite creation"
 
 # Verify that a normal request works, expect three recommendations and three reviews
 assertCurl 200 "curl http://$HOST:$PORT/api/v1/products-composite/1 -s" "Test of service named product-composite with ID=1"
 
-assertEqual 1 $(echo $RESPONSE | jq .productId) "The productId must be 1"
-assertEqual name-1 $(echo $RESPONSE | jq ".product.name") "The product name must be \"name-1\""
-assertEqual 3 $(echo $RESPONSE | jq ".recommendations | length") "3 recommendations must be found"
-assertEqual 3 $(echo $RESPONSE | jq ".reviews | length") "3 reviews must be found"
+assertEqual 1 $(echo $RESPONSE | jq .productId) "The productID is equals to 1"
+assertEqual PANNEAU_SOLAIRE $(echo $RESPONSE | jq ".name") "The product name is \"PANNEAU_SOLAIRE\""
+assertEqual 1 $(echo $RESPONSE | jq ".recommendations | length") "1 recommendation is found"
+#assertEqual 1 $(echo $RESPONSE | jq ".reviews | length") "1 review is found"
 
-assertCurl 404 "curl http://$HOST:$PORT/api/v1/products-composite/13 -s" "Get a 404 response status when the productId eq 13"
+assertCurl 404 "curl http://$HOST:$PORT/api/v1/products-composite/2 -s" "Get a 404 response status when the productId eq 1"
 
-assertCurl 422 "curl http://$HOST:$PORT/api/v1/products-composite/15 -s" "Get a 422 response status when the productId eq 15"
+assertCurl 422 "curl http://$HOST:$PORT/api/v1/products-composite/0 -s" "Get a 422 response status when the productId eq 0"
 
 if [[ $@ == *"stop"* ]]
 then
