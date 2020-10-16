@@ -62,8 +62,9 @@ services:
     ports:
       - "9080:9080"
     depends_on:
-      reviews-db:
-        condition: service_healthy
+      - product
+      - recommendation
+      - review
     environment:
       - SPRING_PROFILES_ACTIVE=docker,product-composite-swagger
       - JAVA_OPTS=-Xms256M -Xmx256M
