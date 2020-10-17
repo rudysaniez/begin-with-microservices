@@ -3,9 +3,9 @@ version: "2.1"
   
 services:
   
-  products-db:
+  mongodb:
     image: mongo:3.2.4
-    container_name: products-db
+    container_name: mongodb
     mem_limit: 350m
     ports:
       - 27017:27017
@@ -32,7 +32,7 @@ services:
     build: microservices/product-service
     mem_limit: 350M
     depends_on:
-      - products-db
+      - mongodb
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256M -Xmx256M
@@ -41,7 +41,7 @@ services:
     build: microservices/recommendation-service
     mem_limit: 350M
     depends_on:
-      - products-db
+      - mongodb
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256M -Xmx256M

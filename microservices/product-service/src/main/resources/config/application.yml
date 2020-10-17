@@ -44,7 +44,7 @@ logging:
 spring:
   data:
     mongodb:
-      host: products-db
+      host: mongodb
       database: productsdb
       port: 27017
     

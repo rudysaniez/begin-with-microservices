@@ -47,8 +47,8 @@ logging:
 spring:
   data:
     mongodb:
-      host: products-db
-      database: productsdb
+      host: mongodb
+      database: recommendationsdb
       port: 27017
     
 ---
