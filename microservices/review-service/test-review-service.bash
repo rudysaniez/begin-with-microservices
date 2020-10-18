@@ -5,7 +5,7 @@ cat test-banner.txt
 echo ""
 
 : ${HOST=localhost}
-: ${PORT=8082}
+: ${PORT=8083}
 
 
 function assertCurl() {
@@ -130,7 +130,7 @@ function testExpectedHttpStatus() {
 
 ###
 # Wait a http status.
-# For example waitHttpStatus 200 "curl -X GET http://localhost:8083/api/v1/recommendations/1 -s ".
+# For example waitHttpStatus 200 "curl -X GET http://localhost:8083/api/v1/reviews/1 -s ".
 # If it's correct then the waits is completed.
 ###
 function waitHttpStatus() {
@@ -165,17 +165,19 @@ fi
 
 
 waitForService http://$HOST:$PORT/api/v1/management/info
-waitHttpStatus 404 "curl -X GET http://$HOST:$PORT/api/v1/recommendations/1 -s "
+waitHttpStatus 404 "curl -X GET http://$HOST:$PORT/api/v1/reviews/1 -s "
 
-assertCurl 201 "curl -X POST -H \"Content-Type: application/json\" -d '{\"recommendationID\":1,\"productID\":1,\"author\":\"rsaniez\",\"rate\":1,\"content\":\"Très bon produit!\"}' \"http://$HOST:$PORT/api/v1/recommendations\" -s " "Recommendation creation"
+assertCurl 201 "curl -X POST -H \"Content-Type: application/json\" -d '{\"reviewID\":1,\"productID\":1,\"author\":\"rsaniez\",\"subject\":\"Trop top!\",\"content\":\"Très bon produit!\"}' \"http://$HOST:$PORT/api/v1/reviews\" -s " "Get a 201 response status after the review creation."
 
-assertEqual rsaniez $(echo $RESPONSE | jq .author) "The author of recommendation is rsaniez"
+assertEqual rsaniez $(echo $RESPONSE | jq .author) "The author of review is equals to rsaniez."
 
-assertCurl 200 "curl -X GET \"http://$HOST:$PORT/api/v1/recommendations?productId=1\" -s " "Search the recommendation by the productId : 1"
+assertCurl 200 "curl -X GET \"http://$HOST:$PORT/api/v1/reviews?productId=1\" -s " "Get a 200 response status after the research review with productID equals to 1."
 
-cleanDoubleQuote "$(echo $RESPONSE | jq .content[0].recommendationID)"
+cleanDoubleQuote "$(echo $RESPONSE | jq .content[0].reviewID)"
 
-assertCurl 200 "curl -X GET http://$HOST:$PORT/api/v1/recommendations/$CLEAN -s " "Search a recommendation by identifier"
+assertCurl 200 "curl -X GET http://$HOST:$PORT/api/v1/reviews/$CLEAN -s " "Get a 200 response status after the research review by reviewID is equals to 1."
+
+assertCurl 200 "curl -X DELETE http://$HOST:$PORT/api/v1/reviews/1 -s " "Get a 200 response status after the review deletion with id is equals to 1."
 
 
 echo ""

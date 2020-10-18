@@ -1,1 +1,21 @@
-{"productID": 3,"name": "lance flammes","weight": 0,"recommendations": [{"recommendationID": 3,"author": "rudysaniez","rate": 1,"content": "Good product!"}],"reviews": [{"reviewID": 3,"author": "rudysaniez","subject": "Nice","content": "Beautiful! it works"}]}
+{
+	"productID": 3,
+	"name": "lance flammes",
+	"weight": 0,
+	"recommendations": [
+		{
+			"recommendationID": 3,
+			"author": "rudysaniez",
+			"rate": 1,
+			"content": "Good product!"
+		}
+	],
+	"reviews": [
+		{
+			"reviewID": 3,
+			"author": "rudysaniez",
+			"subject": "Nice",
+			"content": "Beautiful! it works"
+		}
+	]
+}

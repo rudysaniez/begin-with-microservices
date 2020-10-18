@@ -107,6 +107,53 @@ function waitForService() {
 }
 
 
+###
+# Test the expected http status with the result of the curl commannd passed in second parameter.
+# The first parameter is the expected http status.
+# Example : testExpectedHttpStatus "404" "curl -X GET http://localhost:8083/api/v1/reviews/1 -s"
+###
+function testExpectedHttpStatus() {
+
+	local expectedHttpCode=$1
+	local curlCmd="$2 -w \"%{http_code}\""
+	local result=$(eval $curlCmd)
+	local httpStatus="${result:(-3)}"
+	
+	if [ "$expectedHttpCode" = "$httpStatus" ]; then
+		echo "Ok"
+		return 0
+	else
+		return 1
+	fi
+}
+
+
+###
+# Wait a http status.
+# For example waitHttpStatus 200 "curl -X GET http://localhost:8083/api/v1/products/1 -s ".
+# If it's correct then the waits is completed.
+###
+function waitHttpStatus() {
+
+	httpExpected=$1
+	curlCommand=$2
+    echo -n "Wait the http status: $httpExpected for curl command: $curlCommand... "
+    n=0
+    until testExpectedHttpStatus "$httpExpected" "$curlCommand"
+    do
+        n=$((n + 1))
+        if [[ $n == 100 ]]
+        then
+            echo " Give up"
+            exit 1
+        else
+            sleep 5
+            echo -n ", retry #$n "
+        fi
+    done
+}
+
+
 if [[ $@ == *"start"* ]]
 then
 	echo "Restarting the test environment..."
@@ -118,6 +165,7 @@ fi
 
 
 waitForService http://$HOST:$PORT/api/v1/management/info
+waitHttpStatus 404 "curl -X GET http://$HOST:$PORT/api/v1/products/1 -s "
 
 assertCurl 201 "curl -X POST -H \"Content-Type: application/json\" -d '{\"productID\":1,\"name\":\"Panneau_solaire\",\"weight\":1}' \"http://$HOST:$PORT/api/v1/products\" -s " "Product creation"
 
@@ -128,6 +176,11 @@ assertCurl 200 "curl -X GET \"http://$HOST:$PORT/api/v1/products?name=panneau\" 
 cleanDoubleQuote "$(echo $RESPONSE | jq .content[0].productID)"
 
 assertCurl 200 "curl -X GET http://$HOST:$PORT/api/v1/products/$CLEAN -s " "Search a product by identifier"
+
+
+echo ""
+cat ./test-banner-completed.txt
+echo ""
 
 
 if [[ $@ == *"stop"* ]]

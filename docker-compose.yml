@@ -21,7 +21,7 @@ services:
       - MYSQL_ROOT_PASSWORD=welcome
       - MYSQL_USER=michael
       - MYSQL_PASSWORD=jordan
-      - MYSQL_DATABASE=reviewdb
+      - MYSQL_DATABASE=reviewsdb
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-umichael", "-pjordan", "-h", "localhost"]
       interval: 10s
@@ -31,6 +31,8 @@ services:
   product:
     build: microservices/product-service
     mem_limit: 350M
+    ports:
+      - "9081:8081"
     depends_on:
       - mongodb
     environment:
@@ -40,6 +42,8 @@ services:
   recommendation:
     build: microservices/recommendation-service
     mem_limit: 350M
+    ports:
+      - "9082:8082"
     depends_on:
       - mongodb
     environment:
@@ -49,6 +53,8 @@ services:
   review:
     build: microservices/review-service
     mem_limit: 350M
+    ports:
+      - "9083:8083"
     depends_on:
       reviews-db:
         condition: service_healthy

@@ -101,7 +101,56 @@ function waitForService() {
             echo " Give up"
             exit 1
         else
-            sleep 30
+            sleep 10
+            echo -n ", retry #$n "
+        fi
+    done
+}
+
+
+###
+# Test the expected http status with the result of the curl commannd passed in second parameter.
+# The first parameter is the expected http status.
+# Example : testExpectedHttpStatus "404" "curl -X GET http://localhost:8083/api/v1/products-composite/1 -s"
+###
+function testExpectedHttpStatus() {
+
+	local expectedHttpCode=$1
+	local curlCmd="$2 -w \"%{http_code}\""
+	local result=$(eval $curlCmd)
+	local httpStatus="${result:(-3)}"
+	
+	echo -n "Get a $httpStatus http status, "
+	
+	if [ "$expectedHttpCode" = "$httpStatus" ]; then
+		echo "Ok"
+		return 0
+	else
+		return 1
+	fi
+}
+
+
+###
+# Wait a http status.
+# For example waitHttpStatus 200 "curl -X GET http://localhost:8083/api/v1/reviews/1 -s ".
+# If it's correct then the waits is completed.
+###
+function waitHttpStatus() {
+
+	httpExpected=$1
+	curlCommand=$2
+    echo -n "Wait the http status: $httpExpected for curl command: $curlCommand... "
+    n=0
+    until testExpectedHttpStatus "$httpExpected" "$curlCommand"
+    do
+        n=$((n + 1))
+        if [[ $n == 100 ]]
+        then
+            echo " Give up"
+            exit 1
+        else
+            sleep 5
             echo -n ", retry #$n "
         fi
     done
@@ -119,11 +168,14 @@ fi
 
 
 waitForService http://$HOST:$PORT/api/v1/management/info
+#waitHttpStatus 404 "curl -X GET http://$HOST:$PORT/api/v1/products-composite/1 -s "
+waitHttpStatus 404 "curl -X GET http://$HOST:9081/api/v1/products/1 -s "
+waitHttpStatus 404 "curl -X GET http://$HOST:9082/api/v1/recommendations/1 -s "
+waitHttpStatus 404 "curl -X GET http://$HOST:9083/api/v1/reviews/1 -s "
 
 echo ""
-echo " > Waiting... preparation of services..."
+echo " > Part one for the tests."
 echo ""
-#sleep 15
 
 echo " > Launch the product-composite creation : PANNEAU_SOLAIRE."
 assertCurl 201 "curl -X POST -H \"Content-Type: application/json\" -d '{\"productID\":1,\"name\":\"panneau_solaire\",\"weight\":1,\"recommendations\":[{\"recommendationID\":1,\"author\":\"rudysaniez\",\"rate\":1,\"content\":\"Good product!\"}]}' \"http://$HOST:$PORT/api/v1/products-composite\" -s " "Get a 201 response status : Product-composite is created (PANNEAU_SOLAIRE)."
@@ -143,10 +195,9 @@ assertCurl 404 "curl http://$HOST:$PORT/api/v1/products-composite/999 -s" "Get a
 assertCurl 422 "curl http://$HOST:$PORT/api/v1/products-composite/0 -s" "Get a 422 response status when the productID is equals to 0"
 
 echo ""
-echo " > Please wait for the second part of tests..."
-#sleep 15
-
+echo " > Part two for the tests."
 echo ""
+
 echo " > Launch the deletion of product-composite with the id=1."
 assertCurl 200 "curl -X DELETE http://localhost:9080/api/v1/products-composite/1 -s " "Get a 200 response status when deleting a product-composite with id=1 (PANNEAU_SOLAIRE)"
 
@@ -163,9 +214,11 @@ echo ""
 echo " > Launch the deletion of product-composite with the id=2."
 assertCurl 200 "curl -X DELETE http://localhost:9080/api/v1/products-composite/2 -s " "Get a 200 response status when deleting a product with id=2 (PONCEUSE)."
 
+
 echo ""
 cat ./test-banner-completed.txt
 echo ""
+
 
 if [[ $@ == *"stop"* ]]
 then

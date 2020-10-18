@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor @Data
 @Entity
-@Table(name="REVIEW", catalog="reviewdb")
+@Table(name="REVIEW", catalog="reviewsdb")
 public class ReviewEntity implements Serializable {
 
 	@Id

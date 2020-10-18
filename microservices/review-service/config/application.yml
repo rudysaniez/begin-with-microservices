@@ -10,6 +10,7 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.cache: DEBUG
     org.springframework.cache: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     
 spring:
   jpa:
@@ -20,14 +21,14 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         
   datasource:
-    url: jdbc:mysql://localhost:3306/reviewdb?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/reviewsdb?createDatabaseIfNotExist=true
     username: michael
     password: jordan
     driver-class-name: com.mysql.cj.jdbc.Driver
     
-  liquibase:
-    change-log: classpath:liquibase/create-tables.xml
-    default-schema: reviewdb
-    enabled: true
+#  liquibase:
+#    change-log: classpath:liquibase/create-tables.xml
+#    default-schema: reviewsdb
+#    enabled: true
     
 server.port: 8083
