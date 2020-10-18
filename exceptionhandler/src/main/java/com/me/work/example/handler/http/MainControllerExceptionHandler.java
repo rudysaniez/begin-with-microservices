@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.me.work.example.handler.exception.AlreadyExistsException;
 import com.me.work.example.handler.exception.InvalidInputException;
 import com.me.work.example.handler.exception.NotFoundException;
 
@@ -39,6 +40,17 @@ public class MainControllerExceptionHandler {
 	public @ResponseBody HttpErrorInfo handlerInvalidInputException(ServerHttpRequest request, Exception ex) {
 		return createHttpErrorInfo(HttpStatus.UNPROCESSABLE_ENTITY, request, ex);
 	}
+
+	/**
+	 * @param request
+	 * @param ex
+	 * @return {@link HttpErrorInfo}
+	 */
+	@ResponseStatus(value=HttpStatus.UNPROCESSABLE_ENTITY)
+	@ExceptionHandler(AlreadyExistsException.class)
+	public @ResponseBody HttpErrorInfo handlerAlreadyExistsException(ServerHttpRequest request, Exception ex) {
+		return createHttpErrorInfo(HttpStatus.UNPROCESSABLE_ENTITY, request, ex);
+	}
 	
 	/**
 	 * @param httpStatus
@@ -51,8 +63,7 @@ public class MainControllerExceptionHandler {
         final String path = request.getPath().pathWithinApplication().value();
         final String message = ex.getMessage();
 
-        if(log.isDebugEnabled())
-        	log.debug("Returning HTTP status: {} for path: {}, message: {}", httpStatus, path, message);
+    	log.debug("Returning HTTP status: {} for path: {}, message: {}", httpStatus, path, message);
         
         return new HttpErrorInfo(ZonedDateTime.now(), path, httpStatus, message);
     }

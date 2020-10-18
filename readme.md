@@ -1,51 +1,109 @@
-# Deploying microservices in Docker
+# Product composite services
 
 ## Presentation
 
 4 microservices are implemented :
 
-1. product-service
-2. recommendation-service
-3. review-service
-4. product-composite-service
-	
-The **product-composite-service** calls :
+1. products-service (products layer)
+2. recommendations-service (recommendations layer)
+3. reviews-service (reviews layer)
+4. products-composite-service (integration and aggregation layer)
 
-- product-service
-- recommendation-service
-- review-service
+## Architecture
 
-**Product-composite-service** configuration file :
+- Microservice Product, persistence layer with MongoDB
+- Microservice Recommendation, persistence layer with MongoDB
+- Microservice Review, persistence layer with MySQL
+- Microservice ProductComposite, integration layer (Products layer, recommendations layer and reviews layer)
 
-	---
-	spring.profiles: docker
+You can use MongoDB and MySQL CLI with **docker-compose exec**.
+
+**Example :**
+
+	docker-compose exec mongodb mongo productsdb --quiet --eval "db.products.find()"
+	docker-compose exec mongodb mongo recommendationsdb --quiet --eval "db.recommendations.find()"
 	
-	server.port: 8081
+	docker-compose exec reviews-db mysql -umichael -p -e "select * from reviewsdb.REVIEW"
+
+**Note :**
+
+For the moment, this version use a synchronous client to perform HTTP requests with the RestTemplate component.
+
+The next version, the aim is to use a reactive client.
+
+## products-service
+
+	{
+		"productID": 1,
+		"name": "Solar panel",
+		"weight": 1
+	}
 	
-	app:
-	  product-service:
-	    host: product
-	    port: 8081
-	    
-	  recommendation-service:
-	    host: recommendation
-	    port: 8082
-	    
-	  review-service:
-	    host: review
-	    port: 8083
+It's a simple product with name "solar panel".
+
+You can launch a curl request like following :
+
+	curl -X GET http://host:port/api/v1/products/1 -s | jq
+
+## recommendations-service
+
+	{
+		"recommendationID": 1,
+		"productID": 1,
+		"author": "rsaniez",	
+		"rate": 1,
+		"content": "Very good product!!!"
+	}
 	
-	logging:
-	  level:
-	    com.me.work.example.microservices.core.composite: DEBUG
-	    com.me.work.example.handler.http: DEBUG
-	    
-When it receives a response, it aggregates the information.
-The aggregator is very simple, the objectif is to present the concept.
+You can launch a curl request like following :
+
+	curl -X GET http://host:port/api/v1/recommendations/1 -s | jq
+	
+## reviews-service
+
+	{
+		"reviewID": 1,
+		"productID": 1,
+		"author": "rsaniez",
+		"subject": "My opinion : Very well !!!",
+		"content": "This product is really useful!"
+	}
+	
+You can launch a curl request like following :
+
+	curl -X GET http://host:port/api/v1/reviews/1 -s | jq
+
+## products-composite
+
+	{
+		"productID": 3,
+		"name": "lance flammes",
+		"weight": 0,
+		"recommendations": [
+			{
+				"recommendationID": 3,
+				"author": "rudysaniez",
+				"rate": 1,
+				"content": "Good product!"
+			}
+		],
+		"reviews": [
+			{
+				"reviewID": 3,
+				"author": "rudysaniez",
+				"subject": "Nice",
+				"content": "Beautiful! it works"
+			}
+		]
+	}
+	
+You can launch a curl request like to following :
+
+	curl -X GET http://host:9080/api/v1/products-composite/1 -s | jq
 
 ## Git
 
-	git clone git@github.com:rudysaniez/basic-rest-services-docker-3.git
+	git clone git@github.com:rudysaniez/begin-with-microservices.git
 
 ## Maven
 
@@ -55,92 +113,160 @@ The aggregator is very simple, the objectif is to present the concept.
 
 	docker-compose up --build --detach
 	
-	docker images | grep -i basic-rest-services-docker-3
-	
-	docker ps -a | grep -i basic-rest-services-docker-3
-	
 Logs, you can use :
 	
 	docker-compose logs -f
 	
-You can add the names of the containers you want to see the log :
-
-	docker-compose logs -f product review
-	
 ## Call the product-composite-service
 
-	curl http://localhost:8081/api/v1/products-composite/1
-	
-If you use **jq** util :
-
-	curl http://localhost:8081/api/v1/products-composite/1 -s | jp
+	curl -X GET http://localhost:9081/api/v1/products-composite/1 -s | jq
 	
 Response :
 
 	{
-	  "productId": "1",
-	  "product": {
-	    "productID": "1",
-	    "name": "name-1",
-	    "weight": "123"
-	  },
-	  "recommendations": [
-	    {
-	      "recommendationID": "1",
-	      "productID": "1",
-	      "author": "rudysaniez",
-	      "rate": "1",
-	      "content": "VALIDATED"
-	    },
-	    {
-	      "recommendationID": "2",
-	      "productID": "1",
-	      "author": "rudysaniez",
-	      "rate": "1",
-	      "content": "VALIDATED"
-	    },
-	    {
-	      "recommendationID": "3",
-	      "productID": "1",
-	      "author": "rudysaniez",
-	      "rate": "1",
-	      "content": "VALIDATED"
-	    }
-	  ],
-	  "reviews": [
-	    {
-	      "reviewID": "1",
-	      "productID": "1",
-	      "author": "rudysaniez",
-	      "subject": "review-1",
-	      "content": "VALIDATED"
-	    },
-	    {
-	      "reviewID": "2",
-	      "productID": "1",
-	      "author": "rudysaniez",
-	      "subject": "review-2",
-	      "content": "VALIDATED"
-	    },
-	    {
-	      "reviewID": "3",
-	      "productID": "1",
-	      "author": "rudysaniez",
-	      "subject": "review-3",
-	      "content": "VALIDATED"
-	    }
-	  ]
+		"timestamp": "2020-10-18T14:36:53.525154Z",
+		"path": "/products-composite/1",
+		"httpStatus": "NOT_FOUND",
+		"message": "The product with productID=1 doesn't not exists."
 	}
+
+## Products creation
+
+	curl -X POST -H "Content-Type: application/json" -d '{
+		"productID": 1,
+		"name": "Solar panel",
+		"weight": 0,
+		"recommendations": [
+			{
+				"recommendationID": 1,
+				"author": "rudysaniez",
+				"rate": 1,
+				"content": "Good product!"
+			}
+		],
+		"reviews": [
+			{
+				"reviewID": 1,
+				"author": "rudysaniez",
+				"subject": "My opinion : Very Well",
+				"content": "Beautiful! it works"
+			}
+		]}' "http://localhost:9080/api/v1/products-composite -s | jq
+		
+To executed :
+
+	curl -X POST -H "Content-Type: application/json" -d '{ "productID":1,"name":"Solar panel","weight": 0,"recommendations":[{"recommendationID": 1,"author":"rudysaniez","rate":1,"content":"Good product!"}],"reviews":[{"reviewID":1,"author":"rudysaniez","subject":"My opinion ; Very well","content":"Beautiful! it works" } ]}' "http://localhost:9080/api/v1/products-composite" -s | jq
+	
+Now, launch that :
+
+	curl -X GET http://localhost:9081/api/v1/products-composite/1 -s | jq
+	
+Response :
+
+	{
+		"productID": "1",
+		"name": "SOLAR PANEL",
+		"weight": "0",
+		
+		"recommendations": {
+		    "content": [
+		      {
+		        "recommendationID": "1",
+		        "author": "rudysaniez",
+		        "rate": "1",
+		        "content": "Good product!"
+		      }
+		    ],
+		    "page": {
+		      "size": "20",
+		      "totalElements": "1",
+		      "totalPages": "1",
+		      "number": "0"
+		    }
+    		},
+    		
+    		"reviews": {
+    			"content": [
+		      {
+		        "reviewID": "1",
+		        "author": "rudysaniez",
+		        "subject": "My opinion ; Very well",
+		        "content": "Beautiful! it works"
+		      }
+	    		],
+		    "page": {
+		      "size": "20",
+		      "totalElements": "1",
+		      "totalPages": "1",
+		      "number": "0"
+		    }
+		}
+	}
+	
+Congratulation, a product has been created.
+
+You can delete it like following :
+
+	curl -X DELETE http://localhost:9080/api/v1/products-composite/1 -s | jq
+
+## Use MongoDB and MySQL CLI TOOLS.
+	
+Gets products documents :
+	
+	docker-compose exec mongodb mongo productsdb --quiet --eval "db.products.find()"
+	
+Gets recommendations documents :
+
+	docker-compose exec mongodb mongo recommendationsdb --quiet --eval "db.recommendations.find()"
+	
+Gets reviews in MySQL database :
+
+	docker-compose exec reviews-db mysql -umichael -p -e "select * from reviewsdb.REVIEW"
 
 ## Stopping up the microservices
 
 	docker-compose down
 	
-	docker ps -a
-	
-## Test Product-composite-service with Docker
+## Test Product-composite-service
 
 The **jq** util is required for launch this bash file.
 
 	./test-em-all.bash start stop
 	
+Result :
+
+	Wait for: http://localhost:9080/api/v1/management/info... not yet, retry #1 not yet, retry #2 Ok
+	Wait the http status: 404 for curl command: curl -X GET http://localhost:9081/api/v1/products/1 -s ... Get a 404 http status, Ok
+	Wait the http status: 404 for curl command: curl -X GET http://localhost:9082/api/v1/recommendations/1 -s ... Get a 404 http status, Ok
+	Wait the http status: 404 for curl command: curl -X GET http://localhost:9083/api/v1/reviews/1 -s ... Get a 404 http status, Ok
+
+	> Part one for the tests.
+
+	> Launch the product-composite creation : PANNEAU_SOLAIRE.
+	Test OK (HTTP Code: 201), Get a 201 response status : Product-composite is created (PANNEAU_SOLAIRE).
+	Test OK (HTTP Code: 200), Get a 200 response status when get a product-composite with id=1
+	Test OK (actual value: 1), The productID is equals to 1.
+	Test OK (actual value: PANNEAU_SOLAIRE), The product name is equals to "PANNEAU_SOLAIRE".
+	Test OK (actual value: 1), 1 recommendation is found for the product-composite with id=1.
+
+	> Provoke a duplicate key exception.
+	Test OK (HTTP Code: 422, message:  "Duplicate key : check the productID (1) or the name (panneau_solaire) of product." ), Get a 422 response status : Duplicate key exception.
+
+	> Launch tests for get NOT_FOUND and UNPROCESSABLE_ENTITY status.
+	Test OK (HTTP Code: 404, message:  "The product with productID=999 doesn't not exists." ), Get a 404 response status when the productID is equals to 999
+	Test OK (HTTP Code: 422, message:  "ProductID should be greater than 0" ), Get a 422 response status when the productID is equals to 0
+
+	> Part two for the tests.
+
+	> Launch the deletion of product-composite with the id=1.
+	Test OK (HTTP Code: 200), Get a 200 response status when deleting a product-composite with id=1 (PANNEAU_SOLAIRE)
+
+	> Launch the creation of product-composite :  PONCEUSE
+	Test OK (HTTP Code: 201), Get a 201 response status : Product-composite is created (PONCEUSE).
+	Test OK (HTTP Code: 200), Get a 200 response status when get a product-composite with id=2.
+	Test OK (actual value: PONCEUSE), The product name is equals to "PONCEUSE".
+	Test OK (actual value: 1), 1 recommendation is found for the product-composite with id=2.
+	Test OK (actual value: 1), 1 review is found for the product-composite with id=2.
+
+	> Launch the deletion of product-composite with the id=2.
+	Test OK (HTTP Code: 200), Get a 200 response status when deleting a product with id=2 (PONCEUSE).

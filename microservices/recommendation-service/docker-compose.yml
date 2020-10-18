@@ -1,0 +1,38 @@
+
+version: "3.8"
+  
+services:
+
+  mongodb:
+    image: mongo:3.2.4
+    container_name: mongodb
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 250M
+        reservations:
+          cpus: '0.25'
+          memory: 150M
+    ports:
+      - 27017:27017
+    command: --smallfiles
+    
+  recommendation:
+    build: .
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    ports:
+      - 8082:8082
+    depends_on: 
+      - mongodb
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,recommendation-swagger
+      - JAVA_OPTS=-Xms512M -Xmx512M
+      

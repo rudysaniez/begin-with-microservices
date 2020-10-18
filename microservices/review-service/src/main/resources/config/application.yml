@@ -4,7 +4,14 @@ logging:
     root: INFO
 
 server.port: 7003
- 
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,metrics
+      base-path: /management
+
 spring:
   jackson:
     deserialization:
@@ -19,8 +26,55 @@ spring:
   webflux:
     base-path: /api/v1
     
+  jpa:    
+    hibernate:
+      ddl-auto: update
+      
+    show-sql: false
+    
+    properties:
+      hibernate.cache.use_query_cache: true
+      hibernate.cache.use_second_level_cache: false
+      hibernate.cache.region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+            
+      hibernate.javax.cache.provider: org.ehcache.jsr107.EhcacheCachingProvider
+      hibernate.javax.cache.uri: META-INF/ehcache.xml
+      
+      hibernate.generate_statistics: false
+      hibernate.jdbc.wrap_result_sets: true
+      hibernate.jdbc.batch_size: 20
+      hibernate.default_batch_fetch_size: 4
+  
+  cache:
+    jcache:
+      config: classpath:META-INF/ehcache.xml
+    
+api:
+  pagination:
+    default-page-number: 0
+    default-page-size: 10
+    
 ---
 spring.profiles: docker
+
+spring:
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        
+  datasource:
+    url: jdbc:mysql://reviews-db:3306/reviewsdb?createDatabaseIfNotExist=true
+    username: michael
+    password: jordan
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  liquibase:
+    change-log: classpath:liquibase/create-tables.xml
+    default-schema: reviewsdb
+    enabled: true
 
 server.port: 8083
 

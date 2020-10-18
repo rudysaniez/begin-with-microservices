@@ -1,25 +1,34 @@
 package com.me.work.example.api.core.product;
 
-import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
+import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@Data
+@NoArgsConstructor @Data
 public class Product {
 
-	private final String productID;
+	private Integer productID;
 	
 	@Exclude
-	private final String name;
+	private String name;
 	
 	@Exclude
-	private final Integer weight;
+	private Integer weight;
 	
-	public Product() {
+	@Exclude
+	private LocalDateTime creationDate;
+	
+	@Exclude
+	private LocalDateTime updateDate;
+	
+	public Product(Integer productID, String name, Integer weight) {
 		
-		this.productID = null;
-		this.name = null;
-		this.weight = null;
+		this.productID = productID;
+		this.name = name;
+		this.weight = weight;
+		this.creationDate = LocalDateTime.now();
+		this.updateDate = null;
 	}
 }

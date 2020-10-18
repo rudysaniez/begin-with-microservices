@@ -1,7 +1,18 @@
 
-server.port: 8082
-
 logging:
   level:
+    root: INFO
     com.me.work.example.microservices.core.recommendation: DEBUG
     com.me.work.example.handler.http: DEBUG
+
+---
+spring.profiles: dev
+
+spring:
+  data:
+    mongodb:
+      host: localhost
+      database: recommendationsdb
+      port: 27017
+      
+server.port: 8082

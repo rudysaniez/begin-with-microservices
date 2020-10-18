@@ -18,6 +18,13 @@ app:
     host: localhost
     port: 7003
  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,metrics
+      base-path: /management 
+
 spring:
   jackson:
     deserialization:
@@ -32,10 +39,14 @@ spring:
   webflux:
     base-path: /api/v1
     
+api.pagination:
+  page-number: 0
+  page-size: 20
+    
 ---
 spring.profiles: docker
 
-server.port: 8081
+server.port: 9080
 
 app:
   product-service:
