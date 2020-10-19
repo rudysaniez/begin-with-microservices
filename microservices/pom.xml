@@ -6,7 +6,7 @@
 	
 	<parent>
 		<groupId>com.me.work.example</groupId>
-		<artifactId>basic-rest-services-docker-3</artifactId>
+		<artifactId>products-composite-microservices</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	
