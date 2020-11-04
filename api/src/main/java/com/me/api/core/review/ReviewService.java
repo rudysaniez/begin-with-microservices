@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.me.api.Api;
 import com.me.api.core.common.Paged;
 
+import reactor.core.publisher.Mono;
+
 public interface ReviewService {
 
 	/**
@@ -20,7 +22,7 @@ public interface ReviewService {
 	 * @return {@link Review}
 	 */
 	@GetMapping(value=Api.REVIEW_PATH + "/{reviewID}", produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Review> getReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
+	public Mono<Review> getReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
 	
 	/**
 	 * @param productId
@@ -29,7 +31,7 @@ public interface ReviewService {
 	 * @return page of {@link Review}
 	 */
 	@GetMapping(value=Api.REVIEW_PATH, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Paged<Review>> getReviewByProductId(@RequestParam(name="productId", required=true) Integer productID,
+	public Mono<Paged<Review>> getReviewByProductId(@RequestParam(name="productId", required=true) Integer productID,
 			@RequestParam(name="pageNumber", required=false) Integer pageNumber, 
 				@RequestParam(name="pageSize", required=false) Integer pageSize);
 	
@@ -38,7 +40,7 @@ public interface ReviewService {
 	 * @return {@link Review}
 	 */
 	@PostMapping(value=Api.REVIEW_PATH, consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Review> save(@RequestBody Review review);
+	public Mono<Review> save(@RequestBody Review review);
 	
 	/**
 	 * @param review
@@ -46,11 +48,11 @@ public interface ReviewService {
 	 * @return {@link Review}
 	 */
 	@PutMapping(value=Api.REVIEW_PATH + "/{reviewID}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Review> update(@RequestBody Review review, @PathVariable(name="reviewID", required=true) Integer reviewID);
+	public Mono<Review> update(@RequestBody Review review, @PathVariable(name="reviewID", required=true) Integer reviewID);
 	
 	/**
 	 * @param reviewID
 	 */
 	@DeleteMapping(value=Api.REVIEW_PATH + "/{reviewID}")
-	public void deleteReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
+	public Mono<Void> deleteReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
 }

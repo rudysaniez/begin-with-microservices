@@ -47,6 +47,8 @@ public class ReviewEntityTest {
 	@Before
 	public void setupdb() {
 		
+		reviewRepository.deleteAll();
+		
 		ReviewEntity reviewEntity = new ReviewEntity();
 		reviewEntity.setAuthor(AUTHOR);
 		reviewEntity.setContent(CONTENT);
@@ -77,7 +79,7 @@ public class ReviewEntityTest {
 	@Test
 	public void update() {
 		
-		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).orElseThrow(() -> new NotFoundException());
+		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID);
 		assertEqualsReview(savedReview, entity);
 		
 		entity.setAuthor("rsaniez");
@@ -85,11 +87,11 @@ public class ReviewEntityTest {
 		assertEquals("rsaniez", entity.getAuthor());
 	}
 	
-	@Test(expected=NotFoundException.class)
+	@Test
 	public void delete() {
 		
 		reviewRepository.delete(savedReview);
-		reviewRepository.findByReviewID(REVIEW_ID).orElseThrow(() -> new NotFoundException());
+		reviewRepository.findByReviewID(REVIEW_ID);
 	}
 	
 	@Test(expected=DataIntegrityViolationException.class)
@@ -109,7 +111,7 @@ public class ReviewEntityTest {
 	@Test
 	public void getReviewByReviewID() {
 		
-		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).orElseThrow(() -> new NotFoundException());
+		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID);
 		assertEqualsReview(savedReview, entity);
 		assertEqualsDate(savedReview.getCreationDate(), entity.getCreationDate());
 	}

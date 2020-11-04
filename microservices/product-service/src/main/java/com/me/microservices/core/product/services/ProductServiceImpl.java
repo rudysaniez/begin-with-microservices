@@ -50,6 +50,7 @@ public class ProductServiceImpl implements ProductService {
 	/**
 	 * {@inheritDoc}
 	 */
+	@ResponseStatus(value=HttpStatus.OK)
 	@Override
 	public Mono<Product> getProduct(Integer productID) {
 		
@@ -64,12 +65,14 @@ public class ProductServiceImpl implements ProductService {
 	/**
 	 * {@inheritDoc}
 	 */
+	@ResponseStatus(value=HttpStatus.OK)
 	@Override
 	public Mono<Paged<Product>> findByName(String name, Integer pageNumber, Integer pageSize) {
 
 		if(StringUtils.isEmpty(name)) throw new InvalidInputException("Name should not be empty.");
-		if(pageNumber == null) pageNumber = pagination.getPageNumber();
-		if(pageSize == null) pageSize = pagination.getPageSize();
+		
+		if(pageNumber == null || pageNumber < 0) pageNumber = pagination.getPageNumber();
+		if(pageSize == null || pageSize < 1) pageSize = pagination.getPageSize();
 		
 		final Integer pSize = pageSize;
 		

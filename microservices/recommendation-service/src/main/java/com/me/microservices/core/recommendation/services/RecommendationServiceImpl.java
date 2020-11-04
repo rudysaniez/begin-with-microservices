@@ -4,10 +4,11 @@ import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,9 +23,8 @@ import com.me.microservices.core.recommendation.bo.RecommendationEntity;
 import com.me.microservices.core.recommendation.mapper.RecommendationMapper;
 import com.me.microservices.core.recommendation.repository.RecommendationRepository;
 
-import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
-@Slf4j
 @RestController
 public class RecommendationServiceImpl implements RecommendationService {
 
@@ -49,92 +49,17 @@ public class RecommendationServiceImpl implements RecommendationService {
 	/**
 	 * {@inheritDoc}
 	 */
+	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public ResponseEntity<Recommendation> getRecommendation(Integer recommendationID) {
+	public Mono<Recommendation> getRecommendation(Integer recommendationID) {
 		
 		if(recommendationID < 1) throw new InvalidInputException("RecommendationID should be greater than 0");
 		
-		RecommendationEntity recommendationEnity = recommendationRepository.findByRecommendationID(recommendationID).
-				orElseThrow( () -> new NotFoundException(String.format("The recommendation with recommendationID=%d doesn't not exists.", 
-						recommendationID)));
-		
-		log.debug("Recommendation with id={} has been found.", recommendationID);
-			
-		return ResponseEntity.ok(mapper.toModel(recommendationEnity));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public ResponseEntity<Paged<Recommendation>> getRecommendationByProductId(Integer productID, Integer pageNumber, Integer pageSize) {
-
-		if(pageNumber == null) pageNumber = pagination.getPageNumber();
-		if(pageSize == null) pageSize = pagination.getPageSize();
-		
-		if(productID < 1) throw new InvalidInputException("ProductId should be greater than 0");
-		if(pageNumber < 0) throw new InvalidInputException("Page number should be greater or equal than 0");
-		if(pageSize < 1) throw new InvalidInputException("Page size should be greater than 0");
-		
-		Page<RecommendationEntity> pageOfRecommendation = recommendationRepository.findByProductID(productID, 
-				PageRequest.of(pageNumber, pageSize));
-		
-		log.debug("{} recommendations found by productID={}.", pageOfRecommendation.getTotalElements(), productID);
-		
-		return ResponseEntity.ok(toPaged(pageOfRecommendation));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public ResponseEntity<Recommendation> save(Recommendation recommendation) {
-			
-		try {
-			
-			RecommendationEntity recommendationEntity = mapper.toEntity(recommendation);
-			recommendationEntity.setCreationDate(LocalDateTime.now());
-			
-			recommendationEntity = recommendationRepository.save(recommendationEntity);
-			
-			log.debug("This recommendation has been saved : {}.", mapper.toModel(recommendationEntity));
-			
-			return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toModel(recommendationEntity));
-		}
-		catch(DuplicateKeyException e) {
-			throw new InvalidInputException(String.format("Duplicate key : check the recommendationID (%d).", 
-					recommendation.getRecommendationID()));
-		}
-		
-	}
-
-	/**
-	 * {@link Recommendation}
-	 */
-	@Override
-	public ResponseEntity<Recommendation> update(Recommendation recommendation, Integer recommendationID) {
-		
-		try {
-			
-			RecommendationEntity recommendationEntity = recommendationRepository.findByRecommendationID(recommendationID).
-				orElseThrow(() -> new NotFoundException(String.format("The recommendation with recommendationID=%d doesn't not exists.", recommendationID)));
-		
-			recommendationEntity.setAuthor(recommendation.getAuthor());
-			recommendationEntity.setContent(recommendation.getContent());
-			recommendationEntity.setProductID(recommendation.getProductID());
-			recommendationEntity.setRate(recommendation.getRate());
-			recommendationEntity.setUpdateDate(LocalDateTime.now());
-			
-			recommendationEntity = recommendationRepository.save(recommendationEntity);
-			
-			log.debug("This recommendation has been updated : {}.", mapper.toModel(recommendationEntity));
-			
-			return ResponseEntity.ok(mapper.toModel(recommendationEntity));
-			
-		}
-		catch(DuplicateKeyException e) {
-			throw new InvalidInputException(String.format("Duplicate key : check the recommendationID (%d).", recommendationID));
-		}
+		return recommendationRepository.findByRecommendationID(recommendationID).
+			switchIfEmpty(Mono.error(new NotFoundException(String.format("Recommendation with recommendationID=%d doesn't not exists.", 
+					recommendationID)))).
+			log().
+			map(mapper::toModel);
 	}
 
 	/**
@@ -142,30 +67,84 @@ public class RecommendationServiceImpl implements RecommendationService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public void deleteRecommendation(Integer recommendationID) {
+	public Mono<Paged<Recommendation>> getRecommendationByProductId(Integer productID, Integer pageNumber, Integer pageSize) {
+
+		if(productID < 1) throw new InvalidInputException("ProductId should be greater than 0");
+		if(pageNumber == null || pageNumber < 0) pageNumber = pagination.getPageNumber();
+		if(pageSize == null || pageSize < 1) pageSize = pagination.getPageSize();
+		
+		Pageable page = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.ASC, "recommendationID"));
+		Integer pSize = pageSize;
+		
+		return recommendationRepository.countByProductID(productID).
+			flatMap(count -> recommendationRepository.findByProductID(productID, page).
+					map(mapper::toModel).
+					collectList().
+					map(list -> new Paged<>(list, new PageMetadata(page.getPageSize(), count, count < pSize ? 1 : count % pSize == 0 ? count/pSize : ((count/pSize) + 1), page.getPageNumber()))));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@ResponseStatus(value=HttpStatus.CREATED)
+	@Override
+	public Mono<Recommendation> save(Recommendation recommendation) {
+		
+		if(recommendation.getRecommendationID() < 1) throw new InvalidInputException("RecommendationID should be greater than 0.");
+		
+		RecommendationEntity recommendationEntity = mapper.toEntity(recommendation);
+		recommendationEntity.setCreationDate(LocalDateTime.now());
+		
+		return recommendationRepository.save(recommendationEntity).
+				onErrorMap(DuplicateKeyException.class, e -> new InvalidInputException(String.format("Duplicate key : check the recommendationID (%d).",
+						recommendation.getRecommendationID()))).
+				log().
+				map(mapper::toModel);
+	}
+
+	/**
+	 * {@link Recommendation}
+	 */
+	@ResponseStatus(value=HttpStatus.OK)
+	@Override
+	public Mono<Recommendation> update(Recommendation recommendation, Integer recommendationID) {
+		
+		if(recommendation.getRecommendationID() < 1) throw new InvalidInputException("RecommendationID should be greater than 0.");
+		if(recommendation.getProductID() < 1) throw new InvalidInputException("ProductID in Recommendation should be greater than 0.");
+		
+		return recommendationRepository.findByRecommendationID(recommendationID).
+			switchIfEmpty(Mono.error(new NotFoundException())).
+			log().
+			map(entity -> {
+				
+				entity.setAuthor(recommendation.getAuthor());
+				entity.setContent(recommendation.getContent());
+				entity.setProductID(recommendation.getProductID());
+				entity.setRate(recommendation.getRate());
+				entity.setUpdateDate(LocalDateTime.now());
+				return entity;
+			}).
+			flatMap(entity -> recommendationRepository.save(entity).
+				onErrorMap(DuplicateKeyException.class, 
+						e -> new InvalidInputException(String.format("Duplicate key : check the recommendationID (%d).", 
+								recommendationID))).
+				log()).
+			map(mapper::toModel);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@ResponseStatus(value=HttpStatus.OK)
+	@Override
+	public Mono<Void> deleteRecommendation(Integer recommendationID) {
 		
 		if(recommendationID < 1) throw new InvalidInputException("RecommendationID should be greater than 0");
 		
-		RecommendationEntity recommendationEntity = recommendationRepository.findByRecommendationID(recommendationID).
-				orElseThrow(() -> new NotFoundException(String.format("The recommendation with recommendationID=%d doesn't not exists.", recommendationID)));
-		
-		log.debug("This recommendation with recommendationID={} has been deleted : {}.", recommendationID, 
-				mapper.toModel(recommendationEntity).toString());
-		
-		recommendationRepository.delete(recommendationEntity);
-	}
-	
-	/**
-	 * @param pageOfRecommendationEntity
-	 * @return page of {@link Recommendation}
-	 */
-	private Paged<Recommendation> toPaged(Page<RecommendationEntity> pageOfRecommendationEntity) {
-		
-		Page<Recommendation> pageOfRecommendation = pageOfRecommendationEntity.map(r -> mapper.toModel(r));
-		
-		PageMetadata metadata = new PageMetadata(pageOfRecommendation.getSize(), pageOfRecommendation.getTotalElements(), 
-				pageOfRecommendation.getTotalPages(), pageOfRecommendation.getNumber());
-		
-		return new Paged<>(pageOfRecommendation.getContent(), metadata);
+		return recommendationRepository.findByRecommendationID(recommendationID).
+			switchIfEmpty(Mono.error(new NotFoundException(String.format("Recommendation with recommendationID=%d doesn't not exists.",
+					recommendationID)))).
+			log().
+			flatMap(entity -> recommendationRepository.delete(entity));
 	}
 }

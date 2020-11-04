@@ -13,7 +13,8 @@ spring:
     show-sql: false
     
     hibernate:
-      ddl-auto: create-drop
+      #ddl-auto: create-drop
+      ddl-auto: none
     
     properties:
       hibernate.cache.use_query_cache: true
@@ -32,8 +33,8 @@ spring:
     jcache:
       config: classpath:META-INF/ehcache.xml
        
-  #liquibase:
-    #change-log: classpath:liquibase/create-tables.xml
+  liquibase:
+    change-log: classpath:liquibase/create-tables.xml
     
 api:
   pagination:

@@ -21,7 +21,7 @@ public class ProductEntity {
 	private String id;
 
 	@Indexed(unique=true, name="productId_IDX", direction=IndexDirection.ASCENDING)
-	private int productID;
+	private Integer productID;
 	
 	@Indexed(unique=true, name="productName_IDX", direction=IndexDirection.ASCENDING)
 	private String name;

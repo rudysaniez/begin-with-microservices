@@ -1,25 +1,31 @@
 package com.me.microservices.core.recommendation.repository;
 
-import java.util.Optional;
-
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 
 import com.me.microservices.core.recommendation.bo.RecommendationEntity;
 
-public interface RecommendationRepository extends MongoRepository<RecommendationEntity, Integer> {
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public interface RecommendationRepository extends ReactiveMongoRepository<RecommendationEntity, String> {
 
 	/**
 	 * @param recommendationID
 	 * @return optional of {@link RecommendationEntity}
 	 */
-	public Optional<RecommendationEntity> findByRecommendationID(Integer recommendationID);
+	public Mono<RecommendationEntity> findByRecommendationID(Integer recommendationID);
 	
 	/**
 	 * @param productID
 	 * @param page
 	 * @return page of {@link RecommendationEntity}
 	 */
-	public Page<RecommendationEntity> findByProductID(Integer productID, Pageable page);
+	public Flux<RecommendationEntity> findByProductID(Integer productID, Pageable page);
+	
+	/**
+	 * @param productID
+	 * @return mono of {@link Long}
+	 */
+	public Mono<Long> countByProductID(Integer productID);
 }

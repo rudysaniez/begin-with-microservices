@@ -26,9 +26,9 @@ spring:
     password: jordan
     driver-class-name: com.mysql.cj.jdbc.Driver
     
-#  liquibase:
-#    change-log: classpath:liquibase/create-tables.xml
-#    default-schema: reviewsdb
-#    enabled: true
+  liquibase:
+    change-log: classpath:liquibase/create-tables.xml
+    default-schema: reviewsdb
+    enabled: true
     
 server.port: 8083

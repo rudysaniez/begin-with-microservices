@@ -17,7 +17,7 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 	 * @return optional of {@link ReviewEntity}
 	 */
 	@Transactional(readOnly=true)
-	public Optional<ReviewEntity> findByReviewID(Integer reviewID);
+	public ReviewEntity findByReviewID(Integer reviewID);
 	
 	/**
 	 * @param productID

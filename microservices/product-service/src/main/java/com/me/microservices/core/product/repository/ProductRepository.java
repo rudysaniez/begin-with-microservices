@@ -15,7 +15,7 @@ public interface ProductRepository extends ReactiveMongoRepository<ProductEntity
 	 * @param productID
 	 * @return mono of {@link Product}
 	 */
-	public Mono<ProductEntity> findByProductID(int productID);
+	public Mono<ProductEntity> findByProductID(Integer productID);
 	
 	/**
 	 * @param name

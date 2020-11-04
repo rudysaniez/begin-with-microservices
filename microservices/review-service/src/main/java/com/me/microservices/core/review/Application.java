@@ -1,5 +1,7 @@
 package com.me.microservices.core.review;
 
+import java.util.concurrent.Executors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,6 +20,8 @@ import com.me.microservices.core.review.mapper.ReviewMapperImpl;
 
 import lombok.Getter;
 import lombok.Setter;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -45,6 +49,11 @@ public class Application {
 	@Bean
 	public ReviewMapper reviewMapper() {
 		return new ReviewMapperImpl();
+	}
+	
+	@Bean
+	public Scheduler scheduler() {
+		return Schedulers.fromExecutor(Executors.newFixedThreadPool(10));
 	}
 	
 	/**

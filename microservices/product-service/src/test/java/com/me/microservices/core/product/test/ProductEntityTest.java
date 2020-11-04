@@ -88,6 +88,13 @@ public class ProductEntityTest {
 	}
 	
 	@Test
+	public void productNotFound() {
+		
+		productRepository.delete(savedProduct).block();
+		StepVerifier.create(productRepository.findByProductID(PRODUCT_ID)).verifyComplete();
+	}
+	
+	@Test
 	public void duplicateError() {
 		
 		ProductEntity entity = new ProductEntity(PRODUCT_ID, "MASSE", 1);
