@@ -79,7 +79,7 @@ public class ReviewEntityTest {
 	@Test
 	public void update() {
 		
-		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID);
+		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).get();
 		assertEqualsReview(savedReview, entity);
 		
 		entity.setAuthor("rsaniez");
@@ -111,7 +111,7 @@ public class ReviewEntityTest {
 	@Test
 	public void getReviewByReviewID() {
 		
-		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID);
+		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).get();
 		assertEqualsReview(savedReview, entity);
 		assertEqualsDate(savedReview.getCreationDate(), entity.getCreationDate());
 	}

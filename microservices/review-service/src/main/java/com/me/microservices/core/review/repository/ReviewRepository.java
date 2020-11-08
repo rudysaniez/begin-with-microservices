@@ -17,7 +17,7 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 	 * @return optional of {@link ReviewEntity}
 	 */
 	@Transactional(readOnly=true)
-	public ReviewEntity findByReviewID(Integer reviewID);
+	public Optional<ReviewEntity> findByReviewID(Integer reviewID);
 	
 	/**
 	 * @param productID
@@ -34,4 +34,10 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 	 */
 	@Transactional(readOnly=true)
 	public Optional<ReviewEntity> findByReviewIDAndProductID(Integer reviewID, Integer productID);
+	
+	/**
+	 * @param reviewID
+	 */
+	@Transactional
+	public void deleteByReviewID(Integer reviewID);
 }

@@ -53,6 +53,7 @@ public class ReviewServiceImpl implements ReviewService {
 		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0");
 		
 		Mono<Review> monoOfReview = Mono.just(reviewRepository.findByReviewID(reviewID)).
+			map(opt -> opt.get()).
 			switchIfEmpty(Mono.error(new NotFoundException())).
 			log().
 			map(mapper::toModel);
@@ -109,8 +110,8 @@ public class ReviewServiceImpl implements ReviewService {
 			
 			if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0");
 			
-			ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID);
-					//orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));
+			ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID).
+					orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));
 				
 			reviewEntity.setAuthor(review.getAuthor());
 			reviewEntity.setContent(review.getContent());
@@ -135,8 +136,8 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public Mono<Void> deleteReview(Integer reviewID) {
 	
-		ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID);
-				//orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));
+		ReviewEntity reviewEntity = reviewRepository.findByReviewID(reviewID).
+				orElseThrow(() -> new NotFoundException(String.format("The review with reviewID=%d doesn't not exists.", reviewID)));
 		
 		log.debug("This review with reviewID={} has been deleted : {}.", reviewID, mapper.toModel(reviewEntity).toString());
 		
