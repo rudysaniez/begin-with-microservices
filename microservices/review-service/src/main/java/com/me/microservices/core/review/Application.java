@@ -15,10 +15,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.mapper.ReviewMapper;
 import com.me.microservices.core.review.mapper.ReviewMapperImpl;
-import com.me.microservices.core.review.repository.ReactiveJpaRepositoryImpl;
+import com.me.microservices.core.review.repository.ReactiveReviewRepository;
 import com.me.microservices.core.review.repository.ReviewRepository;
 
 import lombok.Getter;
@@ -60,8 +59,8 @@ public class Application {
 	}
 	
 	@Bean
-	public ReactiveJpaRepositoryImpl<ReviewEntity, Integer> reactiveReviewRepository(ReviewRepository reviewRepository) {
-		return new ReactiveJpaRepositoryImpl<>(reviewRepository, scheduler());
+	public ReactiveReviewRepository reactiveJpaRepository(ReviewRepository reviewRepository) {
+		return new ReactiveReviewRepository(reviewRepository, scheduler());
 	}
 	
 	/**

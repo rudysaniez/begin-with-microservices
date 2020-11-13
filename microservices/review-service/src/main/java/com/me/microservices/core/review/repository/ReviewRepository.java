@@ -36,8 +36,21 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 	public Optional<ReviewEntity> findByReviewIDAndProductID(Integer reviewID, Integer productID);
 	
 	/**
+	 * @param id
+	 * @return True or False
+	 */
+	@Transactional(readOnly=true)
+	public boolean existsByReviewID(Integer id);
+	
+	/**
 	 * @param reviewID
 	 */
 	@Transactional
 	public void deleteByReviewID(Integer reviewID);
+	
+	/**
+	 * @param productID
+	 */
+	@Transactional
+	public void deleteByProductID(Integer productID);
 }

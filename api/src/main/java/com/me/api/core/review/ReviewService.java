@@ -1,7 +1,6 @@
 package com.me.api.core.review;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,5 +53,5 @@ public interface ReviewService {
 	 * @param reviewID
 	 */
 	@DeleteMapping(value=Api.REVIEW_PATH + "/{reviewID}")
-	public Mono<Void> deleteReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
+	public Mono<Boolean> deleteReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
 }

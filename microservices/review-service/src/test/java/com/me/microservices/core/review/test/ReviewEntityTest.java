@@ -49,14 +49,7 @@ public class ReviewEntityTest {
 		
 		reviewRepository.deleteAll();
 		
-		ReviewEntity reviewEntity = new ReviewEntity();
-		reviewEntity.setAuthor(AUTHOR);
-		reviewEntity.setContent(CONTENT);
-		reviewEntity.setProductID(PRODUCT_ID);
-		reviewEntity.setReviewID(REVIEW_ID);
-		reviewEntity.setSubject(SUBJECT);
-		reviewEntity.setCreationDate(LocalDateTime.now());
-		
+		ReviewEntity reviewEntity = new ReviewEntity(REVIEW_ID, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT);
 		savedReview = reviewRepository.save(reviewEntity);
 		
 		assertNotNull(savedReview.getId());

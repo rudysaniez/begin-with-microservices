@@ -18,12 +18,12 @@ import reactor.core.scheduler.Scheduler;
  * @param <ID>
  */
 @NoRepositoryBean
-public class ReactiveJpaRepositoryImpl<T, ID extends Serializable> implements ReactiveCrudRepository<T, ID> {
+public abstract class ReactiveJpaRepository<T, ID extends Serializable> implements ReactiveCrudRepository<T, ID> {
 
-	JpaRepository<T, ID> repo;
-	Scheduler scheduler;
+	protected JpaRepository<T, ID> repo;
+	protected Scheduler scheduler;
 	
-	public ReactiveJpaRepositoryImpl(JpaRepository<T, ID> repo, Scheduler scheduler) {
+	public ReactiveJpaRepository(JpaRepository<T, ID> repo, Scheduler scheduler) {
 		this.repo = repo;
 		this.scheduler = scheduler;
 	}
@@ -82,7 +82,7 @@ public class ReactiveJpaRepositoryImpl<T, ID extends Serializable> implements Re
 				transform(m -> m.map(repo::findById).map(Optional::get).onErrorResume(e -> Mono.empty())).
 				subscribeOn(scheduler);
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -113,7 +113,7 @@ public class ReactiveJpaRepositoryImpl<T, ID extends Serializable> implements Re
 		
 		return Flux.<T>empty().publishOn(scheduler).
 			concatWith(Flux.fromIterable(repo.findAll())).
-			subscribeOn(scheduler).publish().autoConnect(0);
+			subscribeOn(scheduler);
 	}
 
 	/**
@@ -122,8 +122,9 @@ public class ReactiveJpaRepositoryImpl<T, ID extends Serializable> implements Re
 	@Override
 	public Flux<T> findAllById(Iterable<ID> ids) {
 
-		return Mono.just(ids).flux().publishOn(scheduler).
-			transform(flux -> flux.map(repo::findAllById).flatMap(Flux::fromIterable));
+		return Flux.just(ids).publishOn(scheduler).
+			transform(flux -> flux.flatMap(it -> Flux.fromIterable(repo.findAllById(it)))).
+			subscribeOn(scheduler);
 	}
 
 	/**
@@ -134,7 +135,7 @@ public class ReactiveJpaRepositoryImpl<T, ID extends Serializable> implements Re
 		
 		return Flux.from(idStream).buffer().publishOn(scheduler).
 			transform(flux -> flux.flatMap(listOfIds -> Flux.fromIterable(repo.findAllById(listOfIds)))).
-			subscribeOn(scheduler).publish().autoConnect(0);
+			subscribeOn(scheduler);
 	}
 
 	/**
@@ -144,8 +145,8 @@ public class ReactiveJpaRepositoryImpl<T, ID extends Serializable> implements Re
 	public Mono<Long> count() {
 		
 		return Mono.<Long>empty().publishOn(scheduler).
-				concatWith( Mono.defer( () -> Mono.fromSupplier(repo::count))).
-				subscribeOn(scheduler).single();
+			transform(m -> Mono.defer( () -> Mono.fromSupplier( () -> repo.count()))).
+			subscribeOn(scheduler);
 	}
 
 	/**
