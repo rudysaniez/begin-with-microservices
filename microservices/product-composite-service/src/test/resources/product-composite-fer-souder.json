@@ -1,10 +1,10 @@
 {
-	"productID": 3,
-	"name": "lance flammes",
+	"productID": 50,
+	"name": "FER A SOUDER",
 	"weight": 0,
 	"recommendations": [
 		{
-			"recommendationID": 3,
+			"recommendationID": 50,
 			"author": "rudysaniez",
 			"rate": 1,
 			"content": "Good product!"
@@ -12,7 +12,7 @@
 	],
 	"reviews": [
 		{
-			"reviewID": 3,
+			"reviewID": 50,
 			"author": "rudysaniez",
 			"subject": "Nice",
 			"content": "Beautiful! it works"

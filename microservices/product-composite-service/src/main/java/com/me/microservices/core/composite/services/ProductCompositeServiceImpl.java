@@ -1,10 +1,9 @@
 package com.me.microservices.core.composite.services;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,86 +11,66 @@ import com.me.api.core.common.Paged;
 import com.me.api.core.composite.ProductAggregate;
 import com.me.api.core.composite.ProductComposite;
 import com.me.api.core.composite.ProductCompositeService;
-import com.me.api.core.composite.RecommendationSummary;
-import com.me.api.core.composite.ReviewSummary;
 import com.me.api.core.product.Product;
 import com.me.api.core.recommendation.Recommendation;
 import com.me.api.core.review.Review;
 import com.me.microservices.core.composite.Application.PaginationInformation;
+import com.me.microservices.core.composite.mapper.PagedMapper;
 import com.me.microservices.core.composite.mapper.RecommendationMapper;
 import com.me.microservices.core.composite.mapper.ReviewMapper;
 
-import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author rudysaniez @since 0.0.1
  */
-@Slf4j
 @RestController
 public class ProductCompositeServiceImpl implements ProductCompositeService {
 
-	private ProductCompositeIntegration integration;
-	private RecommendationMapper recommendationMapper;
-	private ReviewMapper reviewMapper;
-	private PaginationInformation pagination;
-	
-	@Autowired
-	public ProductCompositeServiceImpl(ProductCompositeIntegration integration, RecommendationMapper recommendationMapper,
-			ReviewMapper reviewMapper, PaginationInformation pagination) {
-		
-		this.integration = integration;
-		this.recommendationMapper = recommendationMapper;
-		this.reviewMapper = reviewMapper;
-		this.pagination = pagination;
-	}
+	@Autowired private ProductCompositeIntegration integration;
+	@Autowired private PagedMapper pagedMapper;
+	@Autowired private RecommendationMapper recommendationMapper;
+	@Autowired private ReviewMapper reviewMapper;
+	@Autowired private PaginationInformation pagination;
 	
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
+	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public ResponseEntity<ProductAggregate> getCompositeProduct(Integer productID, Integer pageNumber, Integer pageSize) {
+	public Mono<ProductAggregate> getCompositeProduct(Integer productID, Integer pageNumber, Integer pageSize) {
 		
 		if(pageNumber == null) pageNumber = pagination.getPageNumber();
 		if(pageSize == null) pageSize = pagination.getPageSize();
 		
-		ResponseEntity<Product> product = integration.getProduct(productID);
-		ResponseEntity<Paged<Recommendation>> pageOfRecommendations = integration.getRecommendationByProductId(productID, pageNumber, pageSize);
-		ResponseEntity<Paged<Review>> pageOfReviews = integration.getReviewByProductId(productID, pageNumber, pageSize);
-		
-		return ResponseEntity.ok(buildProductAggregate(product.getBody(), pageOfRecommendations.getBody(), 
-				pageOfReviews.getBody()));
+		return Mono.zip(values -> createProductAggregate((Product)values[0], (Paged<Recommendation>)values[1], (Paged<Review>)values[2]), 
+				integration.getProduct(productID),
+				integration.getRecommendationByProductId(productID, pageNumber, pageSize),
+				integration.getReviewByProductId(productID, pageNumber, pageSize)).log();
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@ResponseStatus(value=HttpStatus.CREATED)
 	@Override
-	public void createCompositeProduct(ProductComposite body) {
-
-		try {
-			
-			integration.save(new Product(body.getProductID(), body.getName(), body.getWeight()));
-			
-			if(body.getRecommendations() != null)
-				body.getRecommendations().forEach(rs -> {
-					Recommendation model = recommendationMapper.toModel(rs);
-					model.setProductID(body.getProductID());
-					integration.save(model);
-				});
-			
-			if(body.getReviews() != null)
-				body.getReviews().forEach(rs -> {
-					Review model = reviewMapper.toModel(rs);
-					model.setProductID(body.getProductID());
-					integration.save(model);
-				});
-		}
-		catch(RuntimeException e) {
-			
-			log.error(e.getMessage(), e);
-			throw e;
-		}
+	public Mono<ProductComposite> createCompositeProduct(ProductComposite body) {
+		
+		return Mono.zip(values -> createProductComposite((Product)values[0], (List<Recommendation>)values[1], (List<Review>)values[2]), 
+				
+					integration.save(new Product(body.getProductID(), body.getName(), body.getWeight())),
+					
+					Flux.fromIterable(body.getRecommendations()).
+					map(recommendationMapper::toMsModel).map(r -> {r.setProductID(body.getProductID());return r;}).
+					flatMap(r -> integration.save(r)).buffer().single(),
+					
+					Flux.fromIterable(body.getReviews()).
+					map(reviewMapper::toMsModel).map(r -> {r.setProductID(body.getProductID());return r;}).
+					flatMap(r -> integration.save(r)).buffer().single()
+		);
 	}
 
 	/**
@@ -99,68 +78,31 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public void deleteCompositeProduct(Integer productID) {
-		
-		int currentPage = pagination.getPageNumber();
-		int pageSize = pagination.getPageSize();
-		
-		/**
-		 * Recommendations.
-		 */
-		ResponseEntity<Paged<Recommendation>> recommendations = integration.getRecommendationByProductId(productID, currentPage, pageSize);
-		long totalPages = recommendations.getBody().getPage().getTotalPages();
-		
-		do {
-			
-			recommendations.getBody().getContent().forEach(r -> integration.deleteRecommendation(r.getRecommendationID()));
-			currentPage++;
-			
-			if(currentPage < totalPages)
-				recommendations = integration.getRecommendationByProductId(productID, currentPage, pageSize);
-			
-		}while(currentPage < totalPages);
-		
-		currentPage = 0;
-		
-		/**
-		 * Reviews.
-		 */
-		ResponseEntity<Paged<Review>> reviews = integration.getReviewByProductId(productID, currentPage, pageSize);
-		totalPages = reviews.getBody().getPage().getTotalPages();
-		
-		do {
-			
-			reviews.getBody().getContent().forEach(r -> integration.deleteReview(r.getReviewID()));
-			currentPage++;
-			
-			if(currentPage < totalPages)
-				reviews = integration.getReviewByProductId(productID, currentPage, pageSize);
-			
-		}while(currentPage < totalPages);
-		
-		/**
-		 * Product.
-		 */
-		integration.deleteProduct(productID);
+	public Mono<Void> deleteCompositeProduct(Integer productID) {
+		throw new UnsupportedOperationException("An event will be sent (Asynchronous event-driven).");
 	}
-	
+
 	/**
 	 * @return {@link ProductAggregate}
 	 */
-	private ProductAggregate buildProductAggregate(Product product, Paged<Recommendation> recommendations, Paged<Review> reviews) {
+	private ProductAggregate createProductAggregate(Product msProduct, Paged<Recommendation> pageOfMsRecommendation, 
+			Paged<Review> pageOfMsReview) {
 		
-		Paged<RecommendationSummary> pageOfRecommendationSummaries = new Paged<RecommendationSummary>(
-				recommendations.getContent().stream().
-					map(r -> new RecommendationSummary(r.getRecommendationID(), r.getAuthor(), 
-							r.getRate(), r.getContent())).collect(Collectors.toList()), recommendations.getPage());
+		return new ProductAggregate(msProduct.getProductID(), msProduct.getName(), msProduct.getWeight(), 
+				pagedMapper.toPageRecommendationModel(pageOfMsRecommendation), 
+				pagedMapper.toPageReviewModel(pageOfMsReview));
+	}
+	
+	/**
+	 * @param product
+	 * @param listOfMsRecommendations
+	 * @param listOfMsReview
+	 * @return {@link ProductComposite}
+	 */
+	private ProductComposite createProductComposite(Product product, List<Recommendation> listOfMsRecommendations, List<Review> listOfMsReview) {
 		
-		
-		Paged<ReviewSummary> pageOfReviewSummaries = new Paged<ReviewSummary>(
-				reviews.getContent().stream().
-					map(r -> new ReviewSummary(r.getReviewID(), r.getAuthor(), r.getSubject(), 
-							r.getContent())).collect(Collectors.toList()), reviews.getPage());
-		
-		return new ProductAggregate(product.getProductID(), product.getName(), product.getWeight(), 
-				pageOfRecommendationSummaries, pageOfReviewSummaries);
+		return new ProductComposite(product.getProductID(), product.getName(), product.getWeight(), 
+				recommendationMapper.toListOfModel(listOfMsRecommendations), 
+				reviewMapper.toListOfModel(listOfMsReview));
 	}
 }

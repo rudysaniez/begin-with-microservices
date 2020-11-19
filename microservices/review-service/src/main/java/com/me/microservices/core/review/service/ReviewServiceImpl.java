@@ -48,10 +48,11 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public Mono<Review> getReview(Integer reviewID) {
 		
-		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0");
+		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0.");
 		
 		return reviewRepository.findByReviewId(reviewID).
-				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).log().
+				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
+				log().
 				map(mapper::toModel);
 	}
 
@@ -62,12 +63,13 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public Mono<Paged<Review>> getReviewByProductId(Integer productID, Integer pageNumber, Integer pageSize) {
 		
-		if(productID < 1) throw new InvalidInputException("ProductId should be greater than 0");
+		if(productID < 1) throw new InvalidInputException("ProductId should be greater than 0.");
 		if(pageNumber == null || pageNumber < 0) pageNumber = pagination.getDefaultPageNumber();
 		if(pageSize == null || pageSize < 1) pageSize = pagination.getDefaultPageSize();
 		
 		return reviewRepository.findByProductID(productID, PageRequest.of(pageNumber, pageSize, Sort.by(Direction.ASC, "reviewID"))).
-			transform(monoOfPage -> monoOfPage.map(pageOfEntity -> toPaged(pageOfEntity)));
+				log().
+				transform(monoOfPage -> monoOfPage.map(pageOfEntity -> toPaged(pageOfEntity)));
 	}
 	
 	/**
@@ -85,7 +87,8 @@ public class ReviewServiceImpl implements ReviewService {
 		
 		return reviewRepository.save(reviewEntity).
 				onErrorMap(DataIntegrityViolationException.class, 
-						e -> new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", review.getReviewID()))).log().
+						e -> new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", review.getReviewID()))).
+				log().
 				map(mapper::toModel);
 	}
 
@@ -96,11 +99,12 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public Mono<Review> update(Review review, Integer reviewID) {
 		
-		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0");
+		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0.");
 		if(review.getProductID() < 1) throw new InvalidInputException("ProductID in Review should be greater than 0.");
 		
 		return reviewRepository.findByReviewId(reviewID).
-				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).log().
+				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
+				log().
 				transform(m -> m.map(reviewEntity -> {
 					
 					reviewEntity.setAuthor(review.getAuthor());
@@ -112,7 +116,8 @@ public class ReviewServiceImpl implements ReviewService {
 				}).flatMap(reviewRepository::save).
 						onErrorMap(DataIntegrityViolationException.class, 
 								e -> new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", 
-										review.getReviewID()))).log()).
+										review.getReviewID()))).
+						log()).
 				map(mapper::toModel);
 	}
 
@@ -121,13 +126,14 @@ public class ReviewServiceImpl implements ReviewService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public Mono<Boolean> deleteReview(Integer reviewID) {
+	public Mono<Void> deleteReview(Integer reviewID) {
 	
-		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0");
+		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0.");
 		
 		return reviewRepository.findByReviewId(reviewID).
-				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).log().
-				flatMap(reviewRepository::deleteEntity);
+				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
+				log().
+				flatMap(reviewRepository::deleteEntity).flatMap(b -> Mono.<Void>empty());
 	}
 
 	/**

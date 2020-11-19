@@ -53,11 +53,18 @@ public class Application {
 		return new ReviewMapperImpl();
 	}
 	
+	/**
+	 * @return {@link Scheduler}
+	 */
 	@Bean
 	public Scheduler scheduler() {
-		return Schedulers.fromExecutor(Executors.newFixedThreadPool(10));
+		return Schedulers.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
 	}
 	
+	/**
+	 * @param reviewRepository
+	 * @return {@link ReactiveReviewRepository}
+	 */
 	@Bean
 	public ReactiveReviewRepository reactiveJpaRepository(ReviewRepository reviewRepository) {
 		return new ReactiveReviewRepository(reviewRepository, scheduler());

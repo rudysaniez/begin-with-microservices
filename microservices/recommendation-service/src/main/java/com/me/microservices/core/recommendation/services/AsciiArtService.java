@@ -1,4 +1,4 @@
-package com.me.microservices.core.review.service;
+package com.me.microservices.core.recommendation.services;
 
 import org.springframework.stereotype.Service;
 

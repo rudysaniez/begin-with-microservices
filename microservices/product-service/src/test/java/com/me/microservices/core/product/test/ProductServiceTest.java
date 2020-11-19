@@ -1,6 +1,6 @@
 package com.me.microservices.core.product.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.stream.IntStream;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -19,9 +19,8 @@ import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
 import com.me.api.core.product.Product;
-import com.me.microservices.core.product.bo.ProductEntity;
-import com.me.microservices.core.product.mapper.ProductMapper;
 import com.me.microservices.core.product.repository.ProductRepository;
+import com.me.microservices.core.product.services.AsciiArtService;
 
 import reactor.core.publisher.Mono;
 
@@ -36,12 +35,12 @@ public class ProductServiceTest {
 	private ProductRepository productRepository;
 	
 	@Autowired
-	private ProductMapper mapper;
+	private AsciiArtService asciiArt;
 	
 	@Value("${spring.webflux.base-path}") 
 	private String basePath;
 	
-	private static final String PRODUCT_NAME = "MARTEAU VERTUEUX";
+	private static final String PRODUCT_NAME = "PANNEAU SOLAIRE";
 	private static final Integer PRODUCT_ID = 1;
 	private static final Integer PRODUCT_WEIGHT = 1;
 	
@@ -52,16 +51,23 @@ public class ProductServiceTest {
 	@Before
 	public void setupdb() {
 		
+		asciiArt.display("SETUP");
+		
 		productRepository.deleteAll().block();
 		
-		ProductEntity productEntity = new ProductEntity(PRODUCT_ID, PRODUCT_NAME, PRODUCT_WEIGHT);
+		Product product = new Product(PRODUCT_ID, PRODUCT_NAME, PRODUCT_WEIGHT);
 		
-		createAndVerifyStatus(mapper.toModel(productEntity), HttpStatus.CREATED).
+		createAndVerifyStatus(product, HttpStatus.CREATED).
 			jsonPath("$.name").isEqualTo(PRODUCT_NAME);
+		
+		IntStream.rangeClosed(PRODUCT_ID + 1, 21).mapToObj(i -> new Product(i, PRODUCT_NAME + "_" + i, PRODUCT_WEIGHT + i)).
+			forEach(p -> createAndVerifyStatus(p, HttpStatus.CREATED));
 	}
 	
 	@Test
 	public void getProduct() {
+		
+		asciiArt.display("GET PRODUCT");
 		
 		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
 			jsonPath("$.productID").isEqualTo(PRODUCT_ID).
@@ -69,15 +75,19 @@ public class ProductServiceTest {
 	}
 	
 	@Test
-	public void getProductNotFound() {
+	public void getProductNotFoundException() {
 		
-		getAndVerifyStatus(13, HttpStatus.NOT_FOUND).
-			jsonPath("$.path").isEqualTo("/" + Api.PRODUCT_PATH + "/13").
-			jsonPath("$.message").isEqualTo("Product with productID=13 doesn't not exists.");
+		asciiArt.display("GET PRODUCT BUT NOT FOUND EXCEPTION");
+		
+		getAndVerifyStatus(999, HttpStatus.NOT_FOUND).
+			jsonPath("$.path").isEqualTo("/" + Api.PRODUCT_PATH + "/999").
+			jsonPath("$.message").isEqualTo(String.format("Product with productID=%d doesn't not exists.", 999));
 	}
 	
 	@Test
-	public void getProductWithInvalidProductID() {
+	public void getProductInvalidInputException() {
+		
+		asciiArt.display("GET PRODUCT BUT INVALID INPUT EXCEPTION");
 		
 		getAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
 			jsonPath("$.path").isEqualTo("/" + Api.PRODUCT_PATH + "/0").
@@ -85,178 +95,78 @@ public class ProductServiceTest {
 	}
 	
 	@Test
-	public void findProductByName() {
+	public void getProductByName() {
 
-		createAndVerifyStatus(new Product(2, "MARTEAU DU VENT", 3), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(3, "MARTEAU DU CHEVALIER", 3), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(4, "MARTEAU DU GUERRIER", 4), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(5, "DAGUE DU VOLEUR", 1), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(6, "DAGUE DU BOIS", 1), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(7, "EPEE DE FEU", 2), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(8, "MASSE DE BOIS", 4), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(9, "MASSE DE FER", 7), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(10, "MASSE DE CARBONE", 3), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(11, "MASSE DE FEU", 2), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(12, "MASSE ARDENTE", 2), HttpStatus.CREATED);
+		asciiArt.display("GET PRODUCT BY NAME");
 		
-		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
-		getAndVerifyStatus(2, HttpStatus.OK);
-		getAndVerifyStatus(3, HttpStatus.OK);
-		getAndVerifyStatus(5, HttpStatus.OK);
-		getAndVerifyStatus(6, HttpStatus.OK);
-		getAndVerifyStatus(7, HttpStatus.OK);
-		getAndVerifyStatus(8, HttpStatus.OK);
-		getAndVerifyStatus(9, HttpStatus.OK);
-		getAndVerifyStatus(10, HttpStatus.OK);
-		getAndVerifyStatus(11, HttpStatus.OK);
-		getAndVerifyStatus(12, HttpStatus.OK);
+		createAndVerifyStatus(new Product(30, "MARTEAU EN BOIS", 3), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(31, "MARTEAU", 3), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(32, "MARTEAU MENUISIER", 4), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(33, "TOURNEVIS", 1), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(34, "TOURNEVIS ELECTRONIQUE", 1), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(35, "TOURNEVIS A FRAPPER", 2), HttpStatus.CREATED);
 		
 		/**
-		 * Search products starting with by "mart".
-		 * Load the page 0.
+		 * PAGE 0.
 		 */
-		String searchThat = "mart";
-		String itemByPage = "2";
-		Long count = productRepository.countByNameStartingWith(searchThat.toUpperCase()).block();
-		assertEquals(4, count);
-		
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
-		params.add("name", searchThat);
+		params.add("name", "MART");
 		params.add("pageNumber", "0");
-		params.add("pageSize", itemByPage);
+		params.add("pageSize", "2");
 		
 		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.page.size").isEqualTo(itemByPage).
-			jsonPath("$.page.totalElements").isEqualTo(count).
-			jsonPath("$.page.totalPages").isEqualTo(2).
-			jsonPath("$.content[0].productID").isEqualTo(1).
-			jsonPath("$.content[1].productID").isEqualTo(2);
+			jsonPath("$.page.size").isEqualTo(2).
+			jsonPath("$.page.totalElements").isEqualTo(productRepository.countByNameStartingWith("MART").block()).
+			jsonPath("$.page.totalPages").isEqualTo(2);
 		
 		/**
-		 * Search products starting with by "mart".
-		 * Load the page 1.
+		 * PAGE 1.
 		 */
 		params = new LinkedMultiValueMap<>(3);
-		params.add("name", searchThat);
+		params.add("name", "MART");
 		params.add("pageNumber", "1");
-		params.add("pageSize", itemByPage);
+		params.add("pageSize", "2");
 		
 		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.page.size").isEqualTo(itemByPage).
-			jsonPath("$.page.totalElements").isEqualTo(count).
+			jsonPath("$.page.size").isEqualTo(2).
 			jsonPath("$.page.totalPages").isEqualTo(2).
-			jsonPath("$.content[0].productID").isEqualTo(3).
-			jsonPath("$.content[1].productID").isEqualTo(4);
+			jsonPath("$.content[0].name").isEqualTo("MARTEAU MENUISIER");
 		
 		/**
 		 * Search products starting with by "dagu".
 		 */
-		searchThat = "dagu"; itemByPage = "1";
-		count = productRepository.countByNameStartingWith(searchThat.toUpperCase()).block();
-		assertEquals(2, count);
-		
 		params = new LinkedMultiValueMap<>(3);
-		params.add(PARAM_NAME, searchThat);
+		params.add(PARAM_NAME, "TOURNE");
 		params.add(PARAM_PAGE_NUMBER, "0");
-		params.add(PARAM_PAGE_SIZE, itemByPage);
+		params.add(PARAM_PAGE_SIZE, "1");
 		
 		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.page.size").isEqualTo(itemByPage).
-			jsonPath("$.page.totalPages").isEqualTo(2).
-			jsonPath("$.page.totalElements").isEqualTo(count).
-			jsonPath("$.content[0].productID").isEqualTo(5);
-		
-		/**
-		 * Search products starting with by "mass".
-		 * Load items in the same page.
-		 */
-		searchThat = "mass"; itemByPage = "20";
-		count = productRepository.countByNameStartingWith(searchThat.toUpperCase()).block();
-		assertEquals(5, count);
-		
-		params = new LinkedMultiValueMap<>(3);
-		params.add(PARAM_NAME, searchThat);
-		params.add(PARAM_PAGE_NUMBER, "0");
-		params.add(PARAM_PAGE_SIZE, itemByPage);
-		
-		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.page.size").isEqualTo(itemByPage).
-			jsonPath("$.page.totalPages").isEqualTo(1).
-			jsonPath("$.page.totalElements").isEqualTo(count).
-			jsonPath("$.content[0].productID").isEqualTo(8);
-		
-		/**
-		 * Search products starting with "ma".
-		 * Load the page 0.
-		 */
-		searchThat = "ma"; itemByPage = "2";
-		count = productRepository.countByNameStartingWith(searchThat.toUpperCase()).block();
-		assertEquals(9, count);
-		
-		params = new LinkedMultiValueMap<>(3);
-		params.add(PARAM_NAME, searchThat);
-		params.add(PARAM_PAGE_NUMBER, "0");
-		params.add(PARAM_PAGE_SIZE, itemByPage);
-		
-		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.page.size").isEqualTo(itemByPage).
-			jsonPath("$.page.number").isEqualTo(0).
-			jsonPath("$.page.totalPages").isEqualTo(5).
-			jsonPath("$.page.totalElements").isEqualTo(count).
-			jsonPath("$.content[0].productID").isEqualTo(1).
-			jsonPath("$.content[1].productID").isEqualTo(2);
-		
-		/**
-		 * Search products starting with "ma".
-		 * Load the last page.
-		 */
-		params = new LinkedMultiValueMap<>(3);
-		params.add(PARAM_NAME, searchThat);
-		params.add(PARAM_PAGE_NUMBER, "4");
-		params.add(PARAM_PAGE_SIZE, itemByPage);
-		
-		getAndVerifyStatus(params, HttpStatus.OK).
-		jsonPath("$.page.size").isEqualTo(itemByPage).
-		jsonPath("$.page.number").isEqualTo(4).
-		jsonPath("$.page.totalPages").isEqualTo(5).
-		jsonPath("$.page.totalElements").isEqualTo(count).
-		jsonPath("$.content[0].productID").isEqualTo(12);
-		
-		/**
-		 * Search product doesn't not exists.
-		 */
-		searchThat = "zz"; itemByPage="2";
-		
-		params = new LinkedMultiValueMap<>(3);
-		params.add(PARAM_NAME, searchThat);
-		params.add(PARAM_PAGE_NUMBER, "0");
-		params.add(PARAM_PAGE_SIZE, itemByPage);
-		
-		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.content").isEmpty();
+			jsonPath("$.page.size").isEqualTo(1).
+			jsonPath("$.page.totalPages").isEqualTo(3).
+			jsonPath("$.page.totalElements").isEqualTo(productRepository.countByNameStartingWith("TOURNE").block());
 	}
 	
 	@Test
-	public void saveProduct() {
+	public void createProduct() {
 		
-		productRepository.deleteAll().block();
+		asciiArt.display("CREATE PRODUCT");
 		
-		createAndVerifyStatus(new Product(1, "DAGUE DE LA JUSTICE", 1), HttpStatus.CREATED).
-			jsonPath("$.name").isEqualTo("DAGUE DE LA JUSTICE");
+		createAndVerifyStatus(new Product(999, "SCIE CIRCULAIRE", 2), HttpStatus.CREATED).
+			jsonPath("$.name").isEqualTo("SCIE CIRCULAIRE");
 	}
 	
 	@Test
-	public void saveProductWithEmptyName() {
+	public void createProductWithEmptyName() {
 		
-		productRepository.deleteAll().block();
+		asciiArt.display("CREATE PRODUCT WITH EMPTY NAME");
 		
-		createAndVerifyStatus(new Product(PRODUCT_ID, "", PRODUCT_WEIGHT), HttpStatus.UNPROCESSABLE_ENTITY);
+		createAndVerifyStatus(new Product(999, "", PRODUCT_WEIGHT), HttpStatus.UNPROCESSABLE_ENTITY);
 	}
 	
-	//public void saveProductWithInvalidProductID
-	
 	@Test
-	public void saveDuplicateProduct() {
+	public void createProductDuplicateKeyException() {
+		
+		asciiArt.display("CREATE PRODUCT BUT DUPLICATE KEY EXCEPTION");
 		
 		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
 		
@@ -268,28 +178,32 @@ public class ProductServiceTest {
 	@Test
 	public void updateProduct() {
 		
+		asciiArt.display("UPDATE PRODUCT");
+		
 		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
 			jsonPath("$.name").isEqualTo(PRODUCT_NAME).
 			jsonPath("$.weight").isEqualTo(PRODUCT_WEIGHT);
 		
-		Product product = new Product(PRODUCT_ID, "DAGUE_DE_FER", 2);
+		Product product = new Product(PRODUCT_ID, PRODUCT_NAME, 50);
 		
 		updateAndVerifyStatus(product, HttpStatus.OK).
-			jsonPath("$.name").isEqualTo("DAGUE_DE_FER");
+			jsonPath("$.weight").isEqualTo(50);
 		
 		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
-			jsonPath("$.name").isEqualTo("DAGUE_DE_FER").
-			jsonPath("$.weight").isEqualTo(2);
+			jsonPath("$.weight").isEqualTo(50);
 	}
 	
 	@Test
 	public void deleteProduct() {
+		
+		asciiArt.display("DELETE PRODUCT");
 		
 		deleteAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
 		
 		getAndVerifyStatus(PRODUCT_ID, HttpStatus.NOT_FOUND).
 			jsonPath("$.message").isEqualTo(String.format("Product with productID=%d doesn't not exists.", PRODUCT_ID));
 	}
+	
 	
 	/**
 	 * @param productID

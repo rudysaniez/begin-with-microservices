@@ -41,7 +41,7 @@ spring:
     
 api.pagination:
   page-number: 0
-  page-size: 20
+  page-size: 5
     
 ---
 spring.profiles: docker

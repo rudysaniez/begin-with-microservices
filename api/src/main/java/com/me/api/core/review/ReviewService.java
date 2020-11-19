@@ -53,5 +53,5 @@ public interface ReviewService {
 	 * @param reviewID
 	 */
 	@DeleteMapping(value=Api.REVIEW_PATH + "/{reviewID}")
-	public Mono<Boolean> deleteReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
+	public Mono<Void> deleteReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
 }

@@ -22,6 +22,7 @@ import com.me.api.core.recommendation.Recommendation;
 import com.me.microservices.core.recommendation.bo.RecommendationEntity;
 import com.me.microservices.core.recommendation.mapper.RecommendationMapper;
 import com.me.microservices.core.recommendation.repository.RecommendationRepository;
+import com.me.microservices.core.recommendation.services.AsciiArtService;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -39,6 +40,9 @@ public class RecommendationServiceTest {
 	@Autowired
 	private RecommendationMapper mapper;
 	
+	@Autowired
+	private AsciiArtService asciiArt;
+	
 	@Value("${spring.webflux.base-path}") 
 	private String basePath;
 	
@@ -51,6 +55,8 @@ public class RecommendationServiceTest {
 	@Before
 	public void setupdb() {
 		
+		asciiArt.display("SETUP");
+		
 		recommendationRepository.deleteAll().block();
 		
 		Recommendation model = new Recommendation(RECOMMENDATION_ID, PRODUCT_ID, AUTHOR, RATE, CONTENT);
@@ -58,37 +64,28 @@ public class RecommendationServiceTest {
 		createAndVerifyStatus(model, HttpStatus.CREATED).
 			jsonPath("$.content").isEqualTo(CONTENT).
 			jsonPath("$.author").isEqualTo(AUTHOR);
+		
+		IntStream.rangeClosed(RECOMMENDATION_ID + 1, 21).mapToObj(i -> new Recommendation(i, PRODUCT_ID, AUTHOR + "_" + i, RATE + i, CONTENT)).
+			forEach(r -> createAndVerifyStatus(r, HttpStatus.CREATED));
 	}
 	
 	@Test
 	public void getRecommendation() {
 		
+		asciiArt.display("GET RECOMMENDATION");
+		
+		/**
+		 * Get recommendation by recommendationID.
+		 */
 		getAndVerifyStatus(RECOMMENDATION_ID, HttpStatus.OK).
 			jsonPath("$.recommendationID").isEqualTo(RECOMMENDATION_ID).
 			jsonPath("$.author", AUTHOR);
-	}
-	
-	@Test
-	public void getRecommendationNotFound() {
 		
-		getAndVerifyStatus(13, HttpStatus.NOT_FOUND).
-				jsonPath("$.message").isEqualTo(String.format("Recommendation with recommendationID=%d doesn't not exists.", 13)).
-				jsonPath("$.path").isEqualTo("/" + Api.RECOMMENDATION_PATH + "/13");
-	}
-	
-	@Test
-	public void getRecommendationWithInvalidRecommendationID() {
-		
-		getAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
-				jsonPath("$.message").isEqualTo("RecommendationID should be greater than 0").
-				jsonPath("$.path").isEqualTo("/" + Api.RECOMMENDATION_PATH + "/0");
-	}
-	
-	@Test
-	public void findRecommendationByProductID() {
-		
+		/**
+		 * Get recommendation by productID.
+		 */
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
-		params.add("productId", PRODUCT_ID.toString());
+		params.add("productId","1");
 		params.add("pageNumber", "0");
 		params.add("pageSize", "10");
 		
@@ -96,47 +93,61 @@ public class RecommendationServiceTest {
 			jsonPath("$.content[0].author").isEqualTo(AUTHOR).
 			jsonPath("$.page.number").isEqualTo(0).
 			jsonPath("$.page.size").isEqualTo(10).
-			jsonPath("$.page.totalPages").isEqualTo(1).
-			jsonPath("$.page.totalElements").isEqualTo(1);
+			jsonPath("$.page.totalElements").isEqualTo(recommendationRepository.countByProductID(PRODUCT_ID).block()).
+			jsonPath("$.content[1].author").isEqualTo(AUTHOR + "_2");
 		
-		IntStream.rangeClosed(2, 50).forEach(i -> 
-			createAndVerifyStatus(new Recommendation(i, PRODUCT_ID, AUTHOR, RATE, CONTENT + "_" + i), HttpStatus.CREATED));
-		
-		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.content[0].productID").isEqualTo(PRODUCT_ID).
-			jsonPath("$.content[0].author").isEqualTo(AUTHOR).
-			jsonPath("$.page.number").isEqualTo(0).
-			jsonPath("$.page.totalElements", recommendationRepository.countByProductID(PRODUCT_ID));
-		
-		//Page 1.
 		params = new LinkedMultiValueMap<>(3);
-		params.add("productId", PRODUCT_ID.toString());
+		params.add("productId","1");
 		params.add("pageNumber", "1");
 		params.add("pageSize", "10");
 		
 		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.content[0].recommendationID").isEqualTo(11).
 			jsonPath("$.content[0].productID").isEqualTo(PRODUCT_ID).
+			jsonPath("$.content[0].author").isEqualTo(AUTHOR + "_11").
 			jsonPath("$.page.number").isEqualTo(1).
-			jsonPath("$.page.totalElements").isEqualTo(recommendationRepository.countByProductID(PRODUCT_ID).block());
+			jsonPath("$.page.totalElements", recommendationRepository.countByProductID(PRODUCT_ID));
 	}
 	
 	@Test
-	public void saveRecommendation() {
+	public void getRecommendationNotFoundException() {
 		
-		Recommendation entity = new Recommendation(2, PRODUCT_ID, AUTHOR, RATE, CONTENT);
+		asciiArt.display("GET RECOMMENDATION NOT FOUND EXCEPTION");
+		
+		getAndVerifyStatus(999, HttpStatus.NOT_FOUND).
+				jsonPath("$.message").isEqualTo(String.format("Recommendation with recommendationID=%d doesn't not exists.", 999)).
+				jsonPath("$.path").isEqualTo("/" + Api.RECOMMENDATION_PATH + "/999");
+	}
+	
+	@Test
+	public void getRecommendationInvalidInputException() {
+		
+		asciiArt.display("GET RECOMMENDATION INVALID INPUT EXCEPTION");
+		
+		getAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
+				jsonPath("$.message").isEqualTo("RecommendationID should be greater than 0").
+				jsonPath("$.path").isEqualTo("/" + Api.RECOMMENDATION_PATH + "/0");
+	}
+	
+	@Test
+	public void createRecommendation() {
+		
+		asciiArt.display("CREATE RECOMMENDATION");
+		
+		Recommendation entity = new Recommendation(50, 2, AUTHOR + "_50", RATE, CONTENT);
 		
 		createAndVerifyStatus(entity, HttpStatus.CREATED).
-			jsonPath("$.author").isEqualTo(AUTHOR).
-			jsonPath("$.recommendationID").isEqualTo(2).
-			jsonPath("$.productID").isEqualTo(PRODUCT_ID);
+			jsonPath("$.author").isEqualTo(AUTHOR + "_50").
+			jsonPath("$.recommendationID").isEqualTo(50).
+			jsonPath("$.productID").isEqualTo(2);
 		
-		StepVerifier.create(recommendationRepository.findByRecommendationID(2)).
-			expectNextMatches(e -> e.getRecommendationID().equals(2)).verifyComplete();
+		StepVerifier.create(recommendationRepository.findByRecommendationID(50)).
+			expectNextMatches(e -> e.getRecommendationID().equals(50)).verifyComplete();
 	}
 	
 	@Test
-	public void saveRecommendationDuplicateKey() {
+	public void createRecommendationDuplicateKeyException() {
+		
+		asciiArt.display("CREATE RECOMMENDATION BUT DUPLICATE KEY EXCEPTION");
 		
 		Recommendation model = new Recommendation(RECOMMENDATION_ID, PRODUCT_ID, AUTHOR, RATE, CONTENT);
 		
@@ -146,6 +157,8 @@ public class RecommendationServiceTest {
 	
 	@Test
 	public void updateRecommendation() {
+		
+		asciiArt.display("UPDATE RECOMMENDATION");
 		
 		RecommendationEntity entity = recommendationRepository.findByRecommendationID(RECOMMENDATION_ID).block();
 		entity.setContent("Yes! good product! Nice and good conception.");
@@ -157,9 +170,28 @@ public class RecommendationServiceTest {
 	@Test
 	public void deleteRecommendation() {
 		
+		asciiArt.display("DELETE RECOMMENDATION");
+		
 		deleteRecommendation(RECOMMENDATION_ID, HttpStatus.OK);
 		getAndVerifyStatus(RECOMMENDATION_ID, HttpStatus.NOT_FOUND);
 	}
+	
+	@Test
+	public void deleteRecommendationNotFoundException() {
+		
+		asciiArt.display("DELETE RECOMMENDATION BUT NOT FOUND EXCEPTION");
+		
+		deleteRecommendation(999, HttpStatus.NOT_FOUND);
+	}
+	
+	@Test
+	public void deleteRecommendationInvalidInputException() {
+		
+		asciiArt.display("DELETE RECOMMENDATION BUT INVALID INPUT EXCEPTION");
+		
+		deleteRecommendation(0, HttpStatus.UNPROCESSABLE_ENTITY);
+	}
+	
 	
 	/**
 	 * @param recommendationID

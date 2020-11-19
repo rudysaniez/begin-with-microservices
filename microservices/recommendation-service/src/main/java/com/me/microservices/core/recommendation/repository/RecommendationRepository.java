@@ -28,4 +28,10 @@ public interface RecommendationRepository extends ReactiveMongoRepository<Recomm
 	 * @return mono of {@link Long}
 	 */
 	public Mono<Long> countByProductID(Integer productID);
+	
+	/**
+	 * @param productID
+	 * @return mono of {@link Void}
+	 */
+	public Mono<Void> deleteByProductID(Integer productID);
 }

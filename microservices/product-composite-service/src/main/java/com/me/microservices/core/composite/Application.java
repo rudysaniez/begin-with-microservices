@@ -9,8 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.client.RestTemplate;
 
+import com.me.microservices.core.composite.mapper.PagedMapper;
+import com.me.microservices.core.composite.mapper.PagedMapperImpl;
 import com.me.microservices.core.composite.mapper.RecommendationMapper;
 import com.me.microservices.core.composite.mapper.RecommendationMapperImpl;
 import com.me.microservices.core.composite.mapper.ReviewMapper;
@@ -35,15 +36,6 @@ public class Application {
 		SpringApplication.run(Application.class, args);
 	}
 	
-	/**
-	 * Not reactive client, but here it's for a simple example.
-	 * @return {@link RestTemplate}
-	 */
-	@Bean
-	public RestTemplate restTemplate() {
-		return new RestTemplate();
-	}
-	
 	@Bean
 	public RecommendationMapper recommendationMapper() {
 		return new RecommendationMapperImpl();
@@ -52,6 +44,11 @@ public class Application {
 	@Bean
 	public ReviewMapper reviewMapper() {
 		return new ReviewMapperImpl();
+	}
+	
+	@Bean
+	public PagedMapper pagedMapper() {
+		return new PagedMapperImpl();
 	}
 	
 	@Getter @Setter

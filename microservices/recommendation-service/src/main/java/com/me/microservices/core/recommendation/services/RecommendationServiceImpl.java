@@ -77,7 +77,7 @@ public class RecommendationServiceImpl implements RecommendationService {
 		Integer pSize = pageSize;
 		
 		return recommendationRepository.countByProductID(productID).
-			flatMap(count -> recommendationRepository.findByProductID(productID, page).
+			flatMap(count -> recommendationRepository.findByProductID(productID, page).log().
 					map(mapper::toModel).
 					collectList().
 					map(list -> new Paged<>(list, new PageMetadata(page.getPageSize(), count, count < pSize ? 1 : count % pSize == 0 ? count/pSize : ((count/pSize) + 1), page.getPageNumber()))));

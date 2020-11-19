@@ -74,16 +74,16 @@ public class ReviewServiceTest {
 	@Test
 	public void getReview() {
 		
-		asciiArt.display("GET  REVIEW");
+		asciiArt.display("GET REVIEW");
 		
 		/**
-		 * Get by ID.
+		 * Get by reviewID.
 		 */
 		getAndVerifyStatus(REVIEW_ID, HttpStatus.OK).
 			jsonPath("$.content").isEqualTo(CONTENT);
 		
 		/**
-		 * Get page by productID.
+		 * Get review by productID.
 		 */
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
 		params.add("productId", "1");
@@ -102,13 +102,32 @@ public class ReviewServiceTest {
 		getAndVerifyStatus(params, HttpStatus.OK).
 			jsonPath("$.content[0].author").isEqualTo(AUTHOR + "_11").
 			jsonPath("$.content[0].reviewID").isEqualTo(REVIEW_ID + 10);
+	}
+	
+	@Test
+	public void getReviewNotFoundException() {
 		
+		asciiArt.display("GET REVIEW BUT NOT FOUND EXCEPTION");
+		
+		deleteAndVerifyStatus(REVIEW_ID, HttpStatus.OK);
+		
+		getAndVerifyStatus(REVIEW_ID, HttpStatus.NOT_FOUND).
+			jsonPath("$.message").isEqualTo(String.format("Review with reviewID=%d doesn't not exists.", REVIEW_ID));
+	}
+	
+	@Test
+	public void getReviewInvalidInputException() {
+		
+		asciiArt.display("GET REVIEW BUT INVALID INPUT EXCEPTION");
+		
+		getAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
+			jsonPath("$.message").isEqualTo("ReviewID should be greater than 0.");
 	}
 	
 	@Test
 	public void createReview() {
 		
-		asciiArt.display("CREATE  REVIEW");
+		asciiArt.display("CREATE REVIEW");
 		
 		IntStream.rangeClosed(50, 80).mapToObj(i -> new Review(i, 2, AUTHOR + "_" + i, SUBJECT + "_" + i, CONTENT)).
 			forEach(review -> createAndVerifyStatus(review, HttpStatus.CREATED));
@@ -120,21 +139,45 @@ public class ReviewServiceTest {
 	@Test
 	public void createReviewDataIntegrityViolationException() {
 		
-		asciiArt.display("CREATE  REVIEW  BUT  DATA  INTEGRITY  VIOLATION  EXCEPTION");
+		asciiArt.display("CREATE REVIEW BUT DATA INTEGRITY VIOLATION EXCEPTION");
 		
 		createAndVerifyStatus(new Review(REVIEW_ID, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT), HttpStatus.UNPROCESSABLE_ENTITY).
 			jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the reviewID (%d).", REVIEW_ID));
 	}
 	
 	@Test
-	public void getReviewNotFoundException() {
+	public void createReviewInvalidInputException() {
 		
-		asciiArt.display("GET  REVIEW  BUT  NOT  FOUND  EXCEPTION");
+		asciiArt.display("CREATE REVIEW BUT INVALID INPUT EXCEPTION");
+		
+		createAndVerifyStatus(new Review(0, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT), HttpStatus.UNPROCESSABLE_ENTITY).
+			jsonPath("$.message").isEqualTo("ReviewID should be greater than 0.");
+	}
+	
+	@Test
+	public void deleteReview() {
+		
+		asciiArt.display("DELETE REVIEW BY REVIEW ID");
 		
 		deleteAndVerifyStatus(REVIEW_ID, HttpStatus.OK);
+	}
+	
+	@Test
+	public void deleteReviewNotFoundException() {
 		
-		getAndVerifyStatus(REVIEW_ID, HttpStatus.NOT_FOUND).
-			jsonPath("$.message").isEqualTo(String.format("Review with reviewID=%d doesn't not exists.", REVIEW_ID));
+		asciiArt.display("DELETE REVIEW BUT NOT FOUND EXCEPTION");
+		
+		deleteAndVerifyStatus(999, HttpStatus.NOT_FOUND).
+			jsonPath("$.message").isEqualTo(String.format("Review with reviewID=%d doesn't not exists.", 999));
+	}
+	
+	@Test
+	public void deleteReviewInvalidInputException() {
+		
+		asciiArt.display("DELETE REVIEW BUT INVALID INPUT EXCEPTION");
+		
+		deleteAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
+			jsonPath("$.message").isEqualTo("ReviewID should be greater than 0.");
 	}
 	
 	

@@ -76,10 +76,10 @@ public class ProductServiceImpl implements ProductService {
 		
 		final Integer pSize = pageSize;
 		
-		final Pageable page = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.ASC, "productID"));
+		final Pageable page = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.ASC, "name", "productID"));
 		
 		return productRepository.countByNameStartingWith(name.toUpperCase()).
-				flatMap(count -> productRepository.findByNameStartingWith(name.toUpperCase(), page).
+				flatMap(count -> productRepository.findByNameStartingWith(name.toUpperCase(), page).log().
 				map(mapper::toModel).
 				collectList().map(list -> new Paged<Product>(list, 
 						new PageMetadata(page.getPageSize(), count, count < pSize ? 1 : count % pSize == 0 ? count/pSize : ((count/pSize) + 1), page.getPageNumber()))));
@@ -99,7 +99,7 @@ public class ProductServiceImpl implements ProductService {
 		productEntity.setName(product.getName().toUpperCase());
 		productEntity.setCreationDate(LocalDateTime.now());
 		
-		return productRepository.save(productEntity).log().
+		return productRepository.save(productEntity).
 				onErrorMap(DuplicateKeyException.class, e -> new InvalidInputException(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
 						product.getProductID(), product.getName()))).
 				log().
@@ -130,8 +130,8 @@ public class ProductServiceImpl implements ProductService {
 						onErrorMap(DuplicateKeyException.class, e -> new InvalidInputException(String.
 								format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
 										product.getProductID(), product.getName()))).
-						log().
-						map(mapper::toModel));
+						log()).
+				map(mapper::toModel);
 	}
 
 	/**

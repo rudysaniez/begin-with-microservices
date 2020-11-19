@@ -53,6 +53,17 @@ public class MainControllerExceptionHandler {
 	}
 	
 	/**
+	 * @param request
+	 * @param ex
+	 * @return {@link HttpErrorInfo}
+	 */
+	@ResponseStatus(value=HttpStatus.SERVICE_UNAVAILABLE)
+	@ExceptionHandler(UnsupportedOperationException.class)
+	public @ResponseBody HttpErrorInfo handlerUnsupportedOperationException(ServerHttpRequest request, Exception ex) {
+		return createHttpErrorInfo(HttpStatus.SERVICE_UNAVAILABLE, request, ex);
+	}
+	
+	/**
 	 * @param httpStatus
 	 * @param request
 	 * @param ex
