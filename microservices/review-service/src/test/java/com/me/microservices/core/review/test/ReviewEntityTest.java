@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import com.me.handler.exception.NotFoundException;
 import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.repository.ReviewRepository;
 
+@Ignore
 @Transactional
 @RunWith(SpringRunner.class)
 @AutoConfigureTestDatabase(connection=EmbeddedDatabaseConnection.HSQL)

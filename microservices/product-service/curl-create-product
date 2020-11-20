@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e 
+
+cd $(dirname $0)
+
+curl -X POST -H 'Content-Type: application/json'  -d '{ "productID": 50, "name": "FER A SOUDER", "weight": 0 }' http://localhost:8081/api/v1/product -s | jq
+
+curl -X POST -H 'Content-Type: application/json'  -d '{ "productID": 51, "name": "TOURNEVIS ELECTRIQUE", "weight": 0 }' http://localhost:8081/api/v1/products -s | jq
+
+curl -X POST -H 'Content-Type: application/json'  -d '{ "productID": 52, "name": "TOURNEVIS MULTI FONCTION", "weight": 0 }' http://localhost:8081/api/v1/products -s | jq
+
+cd -
