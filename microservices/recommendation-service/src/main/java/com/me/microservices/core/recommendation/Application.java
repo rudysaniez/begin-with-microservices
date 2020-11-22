@@ -13,13 +13,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.index.IndexOperations;
+import org.springframework.data.mongodb.core.ReactiveMongoOperations;
 import org.springframework.data.mongodb.core.index.IndexResolver;
 import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
+import org.springframework.data.mongodb.core.index.ReactiveIndexOperations;
 import org.springframework.data.mongodb.core.mapping.MongoPersistentEntity;
 import org.springframework.data.mongodb.core.mapping.MongoPersistentProperty;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 
 import com.me.microservices.core.recommendation.bo.RecommendationEntity;
 import com.me.microservices.core.recommendation.mapper.RecommendationMapper;
@@ -36,7 +36,7 @@ import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @EnableConfigurationProperties(value= {Application.PaginationInformation.class, Application.PathInformation.class})
-@EnableMongoRepositories
+@EnableReactiveMongoRepositories
 @ComponentScan(basePackages= {"com.me.microservices.core", "com.me.handler.http"})
 @SpringBootApplication
 public class Application {
@@ -101,7 +101,7 @@ public class Application {
 	}
 	
 	@Autowired
-	private MongoOperations mongoTemplate;
+	private ReactiveMongoOperations mongoTemplate;
 	
 	@EventListener(ContextRefreshedEvent.class)
 	public void initIndicesAfterStartup() {
@@ -109,7 +109,7 @@ public class Application {
 		MappingContext<? extends MongoPersistentEntity<?>, MongoPersistentProperty> mappingContext = mongoTemplate.getConverter().getMappingContext();
 		IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
 
-		IndexOperations indexOps = mongoTemplate.indexOps(RecommendationEntity.class);
-		resolver.resolveIndexFor(RecommendationEntity.class).forEach(e -> indexOps.ensureIndex(e));
+		ReactiveIndexOperations indexOps = mongoTemplate.indexOps(RecommendationEntity.class);
+		resolver.resolveIndexFor(RecommendationEntity.class).forEach(e -> indexOps.ensureIndex(e).block());
 	}
 }

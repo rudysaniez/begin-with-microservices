@@ -1,7 +1,6 @@
 package com.me.api.core.product;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,44 +12,47 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.me.api.Api;
 import com.me.api.core.common.Paged;
 
+import reactor.core.publisher.Mono;
+
 public interface ProductService {
 
 	/**
 	 * @param productID
-	 * @return {@link Product}
+	 * @return mono of {@link Product}
 	 */
 	@GetMapping(value=Api.PRODUCT_PATH + "/{productID}", produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Product> getProduct(@PathVariable(name="productID", required=true) Integer productID);
+	public Mono<Product> getProduct(@PathVariable(name="productID", required=true) Integer productID);
 	
 	/**
 	 * @param name
 	 * @param pageNumber
 	 * @param pageSize
-	 * @return page of {@link Product}
+	 * @return mono of {@link Paged}
 	 */
 	@GetMapping(value=Api.PRODUCT_PATH, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Paged<Product>> findByName(@RequestParam(name="name", required=true) String name,
+	public Mono<Paged<Product>> findByName(@RequestParam(name="name", required=true) String name,
 			@RequestParam(name="pageNumber", required=false) Integer pageNumber,
 			@RequestParam(name="pageSize", required=false) Integer pageSize);
 	
 	/**
 	 * @param product
-	 * @return {@link Product}
+	 * @return mono of {@link Product}
 	 */
 	@PostMapping(value=Api.PRODUCT_PATH, consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Product> save(@RequestBody Product product);
+	public Mono<Product> save(@RequestBody Product product);
 	
 	/**
 	 * @param product
 	 * @param ProductID
-	 * @return {@link Product}
+	 * @return mono of {@link Product}
 	 */
 	@PutMapping(value=Api.PRODUCT_PATH + "/{productID}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Product> update(@RequestBody Product product, @PathVariable(name="productID", required=true) Integer productID);
+	public Mono<Product> update(@RequestBody Product product, @PathVariable(name="productID", required=true) Integer productID);
 	
 	/**
 	 * @param productID
+	 * @return mono void
 	 */
 	@DeleteMapping(value=Api.PRODUCT_PATH + "/{productID}")
-	public void deleteProduct(@PathVariable(name="productID", required=true) Integer productID);
+	public Mono<Void> deleteProduct(@PathVariable(name="productID", required=true) Integer productID);
 }

@@ -1,32 +1,38 @@
 package com.me.microservices.core.product.repository;
 
-import java.util.Optional;
-
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 
 import com.me.api.core.product.Product;
 import com.me.microservices.core.product.bo.ProductEntity;
 
-public interface ProductRepository extends MongoRepository<ProductEntity, String> {
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public interface ProductRepository extends ReactiveMongoRepository<ProductEntity, String> {
 
 	/**
 	 * @param productID
-	 * @return optional of {@link Product}
+	 * @return mono of {@link Product}
 	 */
-	public Optional<ProductEntity> findByProductID(int productID);
+	public Mono<ProductEntity> findByProductID(Integer productID);
 	
 	/**
 	 * @param name
-	 * @return optional of {@link Product}
+	 * @return mono of {@link Product}
 	 */
-	public Optional<ProductEntity> findByName(String name);
+	public Mono<ProductEntity> findByName(String name);
 	
 	/**
 	 * @param name
 	 * @param page
-	 * @return page of {@link Product}
+	 * @return flux of {@link Product}
 	 */
-	public Page<ProductEntity> findByNameStartingWith(String name, Pageable page);
+	public Flux<ProductEntity> findByNameStartingWith(String name, Pageable page);
+	
+	/**
+	 * @param name
+	 * @return mono of {@link Long}
+	 */
+	public Mono<Long> countByNameStartingWith(String name);
 }

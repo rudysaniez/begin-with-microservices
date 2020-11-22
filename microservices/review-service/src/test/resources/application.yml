@@ -4,6 +4,7 @@ logging:
     root: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.cache: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 spring:
 
@@ -13,7 +14,8 @@ spring:
     show-sql: false
     
     hibernate:
-      ddl-auto: create-drop
+      #ddl-auto: create-drop
+      ddl-auto: none
     
     properties:
       hibernate.cache.use_query_cache: true
@@ -32,8 +34,9 @@ spring:
     jcache:
       config: classpath:META-INF/ehcache.xml
        
-  #liquibase:
-    #change-log: classpath:liquibase/create-tables.xml
+  liquibase:
+    enabled: true
+    change-log: classpath:liquibase/create-tables.xml
     
 api:
   pagination:

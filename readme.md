@@ -1,4 +1,4 @@
-# Product composite services
+# Developping non-blocking synchronous REST APIs using Spring
 
 ## Presentation
 
@@ -11,10 +11,60 @@
 
 ## Architecture
 
-- Microservice Product, persistence layer with MongoDB
-- Microservice Recommendation, persistence layer with MongoDB
-- Microservice Review, persistence layer with MySQL
-- Microservice ProductComposite, integration layer (Products layer, recommendations layer and reviews layer)
+- Microservice core : **Products** with MongoDB
+- Microservice core : **Recommendations** with MongoDB
+- Microservice core : **Reviews** with MySQL
+- Microservice for the aggregation layer and the integration layer : **products-composite**
+
+## Spring Reactor
+
+Spring 5 integrate the Project Reactor. The Project Reactor is based on *Reactive Streams specification*. The programming model is based on processing streams of data. The data types are **Mono** and **Flux**. A **Flux** is used for process a stream of *0..n* elements and a **Mono** is used for process a stream of *0..1* element.
+
+Project Reactor is implemented in Spring 5, and for this it is necessary to use **Spring WebFlux**, **Spring WebClient** and **Spring Data** with Reactive database driver like following **mongodb-driver-reactivestreams**.
+
+## Non-blocking persistence using Spring-Data for MongoDB
+
+The reactive microservices **products** and **recommendations** use Spring-Data with the *ReactiveMongoRepository* features.
+The CRUD methods return a **Mono** or **Flux** object.
+
+	public Mono<Product> findByProductID(Integer productID);
+	
+	public Flux<Product> findByNameStartingWith(String name, Pageable page);
+
+## Dealing with blocking code
+
+The **Review** persistence layer use Spring-Data JPA to access its data in a relational database. In this case, we don't have support for a non-blocking programming model. We can run the blocking code using Scheduler.
+
+	@Bean
+	public Scheduler scheduler() {
+		return Schedulers.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+	}
+
+**FindById** method implementation :
+
+	@Override
+	public Mono<T> findById(ID id) {
+	
+		return Mono.just(id).publishOn(scheduler).
+		  transform(m -> m.map(repo::findById).map(Optional::get).onErrorResume(e -> Mono.empty())).
+		  subscribeOn(scheduler);
+	}
+	  
+Note : We will integrate R2DBC in a future version.
+
+## Non-blocking REST APIs in the core services and composite services
+
+The APIs return reactive data types : **Mono** and **Flux**. 
+Services implementation don't contain any blocking code.
+Tests change to use reactive services.
+
+The APIs contract change for **products**, **recommendations**, **reviews** and **products-composite** services.Indeed the
+different operations return a data type **Mono** or **Flux**.
+
+The services implementation use a reactive persistence layer, and the composite services use **Spring WebClient** to
+query the different microservices core.
+
+## MongoDB and MySQL CLI
 
 You can use MongoDB and MySQL CLI with **docker-compose exec**.
 
@@ -22,84 +72,7 @@ You can use MongoDB and MySQL CLI with **docker-compose exec**.
 
 	docker-compose exec mongodb mongo productsdb --quiet --eval "db.products.find()"
 	docker-compose exec mongodb mongo recommendationsdb --quiet --eval "db.recommendations.find()"
-	
 	docker-compose exec reviews-db mysql -umichael -p -e "select * from reviewsdb.REVIEW"
-
-**Note :**
-
-For the moment, this version use a synchronous client to perform HTTP requests with the RestTemplate component.
-
-The next version, the aim is to use a reactive client.
-
-## products-service
-
-	{
-		"productID": 1,
-		"name": "Solar panel",
-		"weight": 1
-	}
-	
-It's a simple product with name "solar panel".
-
-You can launch a curl request like following :
-
-	curl -X GET http://host:port/api/v1/products/1 -s | jq
-
-## recommendations-service
-
-	{
-		"recommendationID": 1,
-		"productID": 1,
-		"author": "rsaniez",	
-		"rate": 1,
-		"content": "Very good product!!!"
-	}
-	
-You can launch a curl request like following :
-
-	curl -X GET http://host:port/api/v1/recommendations/1 -s | jq
-	
-## reviews-service
-
-	{
-		"reviewID": 1,
-		"productID": 1,
-		"author": "rsaniez",
-		"subject": "My opinion : Very well !!!",
-		"content": "This product is really useful!"
-	}
-	
-You can launch a curl request like following :
-
-	curl -X GET http://host:port/api/v1/reviews/1 -s | jq
-
-## products-composite
-
-	{
-		"productID": 3,
-		"name": "lance flammes",
-		"weight": 0,
-		"recommendations": [
-			{
-				"recommendationID": 3,
-				"author": "rudysaniez",
-				"rate": 1,
-				"content": "Good product!"
-			}
-		],
-		"reviews": [
-			{
-				"reviewID": 3,
-				"author": "rudysaniez",
-				"subject": "Nice",
-				"content": "Beautiful! it works"
-			}
-		]
-	}
-	
-You can launch a curl request like to following :
-
-	curl -X GET http://host:9080/api/v1/products-composite/1 -s | jq
 
 ## Git
 
@@ -113,101 +86,182 @@ You can launch a curl request like to following :
 
 	docker-compose up --build --detach
 	
-Logs, you can use :
+	or
+	
+	./test-em-all.bash start
+	
+When you launch the bash named **test-em-all.bash**, several tests are launched such as product creation, recommendation and review. The container docker is always active and you can use the **products-composite** microservices.
+
+Note : The **jq** util is required for launch this bash file.
+	
+Display the logs, you can launch :
 	
 	docker-compose logs -f
 	
-## Call the product-composite-service
+## Products-composite creation
 
-	curl -X GET http://localhost:9081/api/v1/products-composite/1 -s | jq
+	./curl-create-product-composite
 	
-Response :
-
+you get this :
+	
 	{
-		"timestamp": "2020-10-18T14:36:53.525154Z",
-		"path": "/products-composite/1",
-		"httpStatus": "NOT_FOUND",
-		"message": "The product with productID=1 doesn't not exists."
-	}
-
-## Products creation
-
-	curl -X POST -H "Content-Type: application/json" -d '{
-		"productID": 1,
-		"name": "Solar panel",
-		"weight": 0,
-		"recommendations": [
-			{
-				"recommendationID": 1,
-				"author": "rudysaniez",
-				"rate": 1,
-				"content": "Good product!"
-			}
-		],
-		"reviews": [
-			{
-				"reviewID": 1,
-				"author": "rudysaniez",
-				"subject": "My opinion : Very Well",
-				"content": "Beautiful! it works"
-			}
-		]}' "http://localhost:9080/api/v1/products-composite -s | jq
-		
-To executed :
-
-	curl -X POST -H "Content-Type: application/json" -d '{ "productID":1,"name":"Solar panel","weight": 0,"recommendations":[{"recommendationID": 1,"author":"rudysaniez","rate":1,"content":"Good product!"}],"reviews":[{"reviewID":1,"author":"rudysaniez","subject":"My opinion ; Very well","content":"Beautiful! it works" } ]}' "http://localhost:9080/api/v1/products-composite" -s | jq
-	
-Now, launch that :
-
-	curl -X GET http://localhost:9081/api/v1/products-composite/1 -s | jq
-	
-Response :
-
-	{
-		"productID": "1",
-		"name": "SOLAR PANEL",
+		"productID": "50",
+		"name": "FER A SOUDER",
 		"weight": "0",
-		
-		"recommendations": {
-		    "content": [
-		      {
-		        "recommendationID": "1",
-		        "author": "rudysaniez",
-		        "rate": "1",
-		        "content": "Good product!"
-		      }
-		    ],
-		    "page": {
-		      "size": "20",
-		      "totalElements": "1",
-		      "totalPages": "1",
-		      "number": "0"
+		  "recommendations": [
+		    {
+		      "recommendationID": "50",
+		      "author": "rudysaniez",
+		      "rate": "1",
+		      "content": "Good product!"
 		    }
-    		},
-    		
-    		"reviews": {
-    			"content": [
-		      {
-		        "reviewID": "1",
-		        "author": "rudysaniez",
-		        "subject": "My opinion ; Very well",
-		        "content": "Beautiful! it works"
-		      }
-	    		],
-		    "page": {
-		      "size": "20",
-		      "totalElements": "1",
-		      "totalPages": "1",
-		      "number": "0"
+		  ],
+		  "reviews": [
+		    {
+		      "reviewID": "50",
+		      "author": "rudysaniez",
+		      "subject": "Nice",
+		      "content": "Beautiful! it works"
 		    }
-		}
+		  ]
 	}
 	
-Congratulation, a product has been created.
+	{
+	  "productID": "51",
+	  "name": "TOURNEVIS ELECTRIQUE",
+	  "weight": "0",
+	  "recommendations": [
+	    {
+	      "recommendationID": "51",
+	      "author": "rudysaniez",
+	      "rate": "1",
+	      "content": "Good product!"
+	    },
+	    {
+	      "recommendationID": "52",
+	      "author": "nathansaniez",
+	      "rate": "1",
+	      "content": "Not bad!"
+	    }
+	  ],
+	  "reviews": [
+	    {
+	      "reviewID": "51",
+	      "author": "rudysaniez",
+	      "subject": "Nice",
+	      "content": "Beautiful! it works"
+	    },
+	    {
+	      "reviewID": "52",
+	      "author": "stephanesaniez",
+	      "subject": "Nice",
+	      "content": "Beautiful! it works"
+	    },
+	    {
+	      "reviewID": "53",
+	      "author": "nathansaniez",
+	      "subject": "Not bad!",
+	      "content": "My opinion : Not bad!"
+	    }
+	  ]
+	}
+		
+	{
+	  "productID": "52",
+	  "name": "TOURNEVIS MULTI FONCTION",
+	  "weight": "0",
+	  "recommendations": [
+	    {
+	      "recommendationID": "54",
+	      "author": "nathansaniez",
+	      "rate": "1",
+	      "content": "Not bad!"
+	    },
+	    {
+	      "recommendationID": "53",
+	      "author": "rudysaniez",
+	      "rate": "1",
+	      "content": "Good product!"
+	    }
+	  ],
+	  "reviews": [
+	    {
+	      "reviewID": "54",
+	      "author": "rudysaniez",
+	      "subject": "Nice",
+	      "content": "Beautiful! it works"
+	    },
+	    {
+	      "reviewID": "55",
+	      "author": "stephanesaniez",
+	      "subject": "Nice",
+	      "content": "Beautiful! it works"
+	    },
+	    {
+	      "reviewID": "56",
+	      "author": "nathansaniez",
+	      "subject": "Not bad!",
+	      "content": "My opinion : Not bad!"
+	    }
+	  ]
+	}
 
-You can delete it like following :
+## Get products-composite
 
-	curl -X DELETE http://localhost:9080/api/v1/products-composite/1 -s | jq
+	./curl-get-product-composite 50
+	
+you get this :
+
+	{
+	  "productID": "50",
+	  "name": "FER A SOUDER",
+	  "weight": "0",
+	  "recommendations": {
+	    "content": [
+	      {
+	        "recommendationID": "50",
+	        "author": "rudysaniez",
+	        "rate": "1",
+	        "content": "Good product!"
+	      }
+	    ],
+	    "page": {
+	      "size": "5",
+	      "totalElements": "1",
+	      "totalPages": "1",
+	      "number": "0"
+	    }
+	  },
+	  "reviews": {
+	    "content": [
+	      {
+	        "reviewID": "50",
+	        "author": "rudysaniez",
+	        "subject": "Nice",
+	        "content": "Beautiful! it works"
+	      }
+	    ],
+	    "page": {
+	      "size": "5",
+	      "totalElements": "1",
+	      "totalPages": "1",
+	      "number": "0"
+	    }
+	  }
+	}
+
+## Delete products-composite
+
+	./curl-delete-product-composite 50
+	
+you get this :
+
+	{
+	  "timestamp": "2020-11-22T20:37:19.396714Z",
+	  "path": "/products-composite/50",
+	  "httpStatus": "SERVICE_UNAVAILABLE",
+	  "message": "An event will be sent (Asynchronous event-driven)."
+	}
 
 ## Use MongoDB and MySQL CLI TOOLS.
 	
@@ -219,7 +273,7 @@ Gets recommendations documents :
 
 	docker-compose exec mongodb mongo recommendationsdb --quiet --eval "db.recommendations.find()"
 	
-Gets reviews in MySQL database :
+Gets reviews in MySQL database (password is **jordan**) :
 
 	docker-compose exec reviews-db mysql -umichael -p -e "select * from reviewsdb.REVIEW"
 
@@ -227,7 +281,7 @@ Gets reviews in MySQL database :
 
 	docker-compose down
 	
-## Test Product-composite-service
+## Test products-composite services
 
 The **jq** util is required for launch this bash file.
 
@@ -238,35 +292,14 @@ Result :
 	Wait for: http://localhost:9080/api/v1/management/info... not yet, retry #1 not yet, retry #2 Ok
 	Wait the http status: 404 for curl command: curl -X GET http://localhost:9081/api/v1/products/1 -s ... Get a 404 http status, Ok
 	Wait the http status: 404 for curl command: curl -X GET http://localhost:9082/api/v1/recommendations/1 -s ... Get a 404 http status, Ok
-	Wait the http status: 404 for curl command: curl -X GET http://localhost:9083/api/v1/reviews/1 -s ... Get a 404 http status, Ok
-
-	> Part one for the tests.
-
-	> Launch the product-composite creation : PANNEAU_SOLAIRE.
+	Wait the http status: 404 for curl command: curl -X GET http://localhost:9083/api/v1/reviews/1 -s ... Get a 000 http status, , retry #1 Get a 404 http status, Ok
+	
+	 > Part one for the tests.
+	
+	 > Launch the product-composite creation : SOLAR_PANEL.
 	Test OK (HTTP Code: 201), Get a 201 response status : Product-composite is created (PANNEAU_SOLAIRE).
 	Test OK (HTTP Code: 200), Get a 200 response status when get a product-composite with id=1
 	Test OK (actual value: 1), The productID is equals to 1.
-	Test OK (actual value: PANNEAU_SOLAIRE), The product name is equals to "PANNEAU_SOLAIRE".
+	Test OK (actual value: SOLAR_PANEL), The product name is equals to "SOLAR_PANEL".
 	Test OK (actual value: 1), 1 recommendation is found for the product-composite with id=1.
-
-	> Provoke a duplicate key exception.
-	Test OK (HTTP Code: 422, message:  "Duplicate key : check the productID (1) or the name (panneau_solaire) of product." ), Get a 422 response status : Duplicate key exception.
-
-	> Launch tests for get NOT_FOUND and UNPROCESSABLE_ENTITY status.
-	Test OK (HTTP Code: 404, message:  "The product with productID=999 doesn't not exists." ), Get a 404 response status when the productID is equals to 999
-	Test OK (HTTP Code: 422, message:  "ProductID should be greater than 0" ), Get a 422 response status when the productID is equals to 0
-
-	> Part two for the tests.
-
-	> Launch the deletion of product-composite with the id=1.
-	Test OK (HTTP Code: 200), Get a 200 response status when deleting a product-composite with id=1 (PANNEAU_SOLAIRE)
-
-	> Launch the creation of product-composite :  PONCEUSE
-	Test OK (HTTP Code: 201), Get a 201 response status : Product-composite is created (PONCEUSE).
-	Test OK (HTTP Code: 200), Get a 200 response status when get a product-composite with id=2.
-	Test OK (actual value: PONCEUSE), The product name is equals to "PONCEUSE".
-	Test OK (actual value: 1), 1 recommendation is found for the product-composite with id=2.
-	Test OK (actual value: 1), 1 review is found for the product-composite with id=2.
-
-	> Launch the deletion of product-composite with the id=2.
-	Test OK (HTTP Code: 200), Get a 200 response status when deleting a product with id=2 (PONCEUSE).
+	Test OK (actual value: 1), 1 review is found for the product-composite with id=1.

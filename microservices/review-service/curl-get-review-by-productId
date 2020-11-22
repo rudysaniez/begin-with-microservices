@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e 
+
+cd $(dirname $0)
+
+curl -X GET "http://localhost:8083/api/v1/reviews?productId=$1" -s | jq
+
+cd -

@@ -1,7 +1,6 @@
 package com.me.microservices.core.product.test;
 
-import static org.junit.Assert.assertTrue;
-import static reactor.core.publisher.Mono.just;
+import java.util.stream.IntStream;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,12 +13,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
 import com.me.api.core.product.Product;
-import com.me.microservices.core.product.bo.ProductEntity;
-import com.me.microservices.core.product.mapper.ProductMapper;
 import com.me.microservices.core.product.repository.ProductRepository;
+import com.me.microservices.core.product.services.AsciiArtService;
+
+import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
@@ -32,113 +35,239 @@ public class ProductServiceTest {
 	private ProductRepository productRepository;
 	
 	@Autowired
-	private ProductMapper mapper;
+	private AsciiArtService asciiArt;
 	
 	@Value("${spring.webflux.base-path}") 
 	private String basePath;
 	
-	private static final String PRODUCT_NAME = "marteau vertueux";
-	private static final Integer PRODUCT_ID = 999;
-	private static final Integer PRODUCT_WEIGHT = 999;
+	private static final String PRODUCT_NAME = "PANNEAU SOLAIRE";
+	private static final Integer PRODUCT_ID = 1;
+	private static final Integer PRODUCT_WEIGHT = 1;
+	
+	private static final String PARAM_NAME = "name";
+	private static final String PARAM_PAGE_NUMBER = "pageNumber";
+	private static final String PARAM_PAGE_SIZE = "pageSize";
 	
 	@Before
 	public void setupdb() {
 		
-		productRepository.deleteAll();
-		ProductEntity productEntity = new ProductEntity(PRODUCT_ID, PRODUCT_NAME, PRODUCT_WEIGHT);
+		asciiArt.display("SETUP");
 		
-		client.post().uri(basePath + "/" + Api.PRODUCT_PATH).accept(MediaType.APPLICATION_JSON).
-			body(just(mapper.toModel(productEntity)), Product.class).exchange().
-			expectStatus().isEqualTo(HttpStatus.CREATED).
-			expectHeader().contentType(MediaType.APPLICATION_JSON)
-			.expectBody().
-				jsonPath("$.name").isEqualTo(PRODUCT_NAME.toUpperCase());
+		productRepository.deleteAll().block();
 		
-		assertTrue(productRepository.findByProductID(PRODUCT_ID).isPresent());
+		Product product = new Product(PRODUCT_ID, PRODUCT_NAME, PRODUCT_WEIGHT);
+		
+		createAndVerifyStatus(product, HttpStatus.CREATED).
+			jsonPath("$.name").isEqualTo(PRODUCT_NAME);
+		
+		IntStream.rangeClosed(PRODUCT_ID + 1, 21).mapToObj(i -> new Product(i, PRODUCT_NAME + "_" + i, PRODUCT_WEIGHT + i)).
+			forEach(p -> createAndVerifyStatus(p, HttpStatus.CREATED));
 	}
 	
 	@Test
 	public void getProduct() {
 		
-		client.get().uri(basePath + "/" + Api.PRODUCT_PATH + "/" + PRODUCT_ID).accept(MediaType.APPLICATION_JSON).exchange().
-			expectStatus().isOk().
-			expectHeader().contentType(MediaType.APPLICATION_JSON).
-			expectBody().
-				jsonPath("$.productID").isEqualTo(PRODUCT_ID).
-				jsonPath("$.name").isEqualTo(PRODUCT_NAME.toUpperCase()).
-				jsonPath("$.productID").isEqualTo(PRODUCT_ID);
+		asciiArt.display("GET PRODUCT");
+		
+		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
+			jsonPath("$.productID").isEqualTo(PRODUCT_ID).
+			jsonPath("$.name").isEqualTo(PRODUCT_NAME);
 	}
 	
 	@Test
-	public void getProductNotFound() {
+	public void getProductNotFoundException() {
 		
-		client.get().uri(basePath + "/" + Api.PRODUCT_PATH + "/13").accept(MediaType.APPLICATION_JSON).exchange().
-			expectStatus().isEqualTo(HttpStatus.NOT_FOUND).
-			expectHeader().contentType(MediaType.APPLICATION_JSON_VALUE).
-			expectBody().
-				jsonPath("$.path").isEqualTo("/" + Api.PRODUCT_PATH + "/13").
-				jsonPath("$.message").isEqualTo("The product with productID=13 doesn't not exists.");
+		asciiArt.display("GET PRODUCT BUT NOT FOUND EXCEPTION");
+		
+		getAndVerifyStatus(999, HttpStatus.NOT_FOUND).
+			jsonPath("$.path").isEqualTo("/" + Api.PRODUCT_PATH + "/999").
+			jsonPath("$.message").isEqualTo(String.format("Product with productID=%d doesn't not exists.", 999));
 	}
 	
 	@Test
-	public void getProductWithInvalidProductID() {
+	public void getProductInvalidInputException() {
 		
-		client.get().uri(basePath + "/" + Api.PRODUCT_PATH + "/0").accept(MediaType.APPLICATION_JSON).exchange().
-			expectStatus().is4xxClientError().
-			expectBody().
-				jsonPath("$.path").isEqualTo("/" + Api.PRODUCT_PATH + "/0").
-				jsonPath("$.message").isEqualTo("ProductID should be greater than 0");
+		asciiArt.display("GET PRODUCT BUT INVALID INPUT EXCEPTION");
+		
+		getAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
+			jsonPath("$.path").isEqualTo("/" + Api.PRODUCT_PATH + "/0").
+			jsonPath("$.message").isEqualTo("ProductID should be greater than 0.");
 	}
 	
 	@Test
-	public void findProductByName() {
+	public void getProductByName() {
+
+		asciiArt.display("GET PRODUCT BY NAME");
 		
-		client.get().uri(String.format(basePath + "/" + Api.PRODUCT_PATH + "?name=%s&", "marte")).accept(MediaType.APPLICATION_JSON).exchange().
-			expectStatus().isEqualTo(HttpStatus.OK).
-			expectBody().
-				jsonPath("$.content[0].productID").isEqualTo(PRODUCT_ID).
-				jsonPath("$.content[0].name").isEqualTo(PRODUCT_NAME.toUpperCase());
+		createAndVerifyStatus(new Product(30, "MARTEAU EN BOIS", 3), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(31, "MARTEAU", 3), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(32, "MARTEAU MENUISIER", 4), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(33, "TOURNEVIS", 1), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(34, "TOURNEVIS ELECTRONIQUE", 1), HttpStatus.CREATED);
+		createAndVerifyStatus(new Product(35, "TOURNEVIS A FRAPPER", 2), HttpStatus.CREATED);
+		
+		/**
+		 * PAGE 0.
+		 */
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
+		params.add("name", "MART");
+		params.add("pageNumber", "0");
+		params.add("pageSize", "2");
+		
+		getAndVerifyStatus(params, HttpStatus.OK).
+			jsonPath("$.page.size").isEqualTo(2).
+			jsonPath("$.page.totalElements").isEqualTo(productRepository.countByNameStartingWith("MART").block()).
+			jsonPath("$.page.totalPages").isEqualTo(2);
+		
+		/**
+		 * PAGE 1.
+		 */
+		params = new LinkedMultiValueMap<>(3);
+		params.add("name", "MART");
+		params.add("pageNumber", "1");
+		params.add("pageSize", "2");
+		
+		getAndVerifyStatus(params, HttpStatus.OK).
+			jsonPath("$.page.size").isEqualTo(2).
+			jsonPath("$.page.totalPages").isEqualTo(2).
+			jsonPath("$.content[0].name").isEqualTo("MARTEAU MENUISIER");
+		
+		/**
+		 * Search products starting with by "dagu".
+		 */
+		params = new LinkedMultiValueMap<>(3);
+		params.add(PARAM_NAME, "TOURNE");
+		params.add(PARAM_PAGE_NUMBER, "0");
+		params.add(PARAM_PAGE_SIZE, "1");
+		
+		getAndVerifyStatus(params, HttpStatus.OK).
+			jsonPath("$.page.size").isEqualTo(1).
+			jsonPath("$.page.totalPages").isEqualTo(3).
+			jsonPath("$.page.totalElements").isEqualTo(productRepository.countByNameStartingWith("TOURNE").block());
 	}
 	
 	@Test
-	public void saveProduct() {
+	public void createProduct() {
 		
-		ProductEntity productEntity = new ProductEntity(1, "epee de la justice", 3);
+		asciiArt.display("CREATE PRODUCT");
 		
-		client.post().uri(basePath + "/" + Api.PRODUCT_PATH).accept(MediaType.APPLICATION_JSON).
-			body(just(mapper.toModel(productEntity)), Product.class).exchange().
-				expectStatus().isEqualTo(HttpStatus.CREATED).
-				expectBody().jsonPath("$.productID").isEqualTo(1);
+		createAndVerifyStatus(new Product(999, "SCIE CIRCULAIRE", 2), HttpStatus.CREATED).
+			jsonPath("$.name").isEqualTo("SCIE CIRCULAIRE");
 	}
 	
 	@Test
-	public void saveProductDuplicateKey() {
+	public void createProductWithEmptyName() {
 		
-		ProductEntity productEntity = new ProductEntity(PRODUCT_ID, "Sabre de lumiere", 2);
+		asciiArt.display("CREATE PRODUCT WITH EMPTY NAME");
 		
-		client.post().uri(basePath + "/" + Api.PRODUCT_PATH).contentType(MediaType.APPLICATION_JSON).
-			body(just(mapper.toModel(productEntity)), Product.class).exchange().
-				expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY).
-				expectBody().
-					jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", PRODUCT_ID, "Sabre de lumiere"));
+		createAndVerifyStatus(new Product(999, "", PRODUCT_WEIGHT), HttpStatus.UNPROCESSABLE_ENTITY);
+	}
+	
+	@Test
+	public void createProductDuplicateKeyException() {
+		
+		asciiArt.display("CREATE PRODUCT BUT DUPLICATE KEY EXCEPTION");
+		
+		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
+		
+		createAndVerifyStatus(new Product(PRODUCT_ID, PRODUCT_NAME, PRODUCT_WEIGHT), HttpStatus.UNPROCESSABLE_ENTITY).
+			jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
+					PRODUCT_ID, PRODUCT_NAME));
 	}
 	
 	@Test
 	public void updateProduct() {
 		
-		ProductEntity productEntity = new ProductEntity(PRODUCT_ID, "Sabre de lumiere", 2);
+		asciiArt.display("UPDATE PRODUCT");
 		
-		client.put().uri(basePath + "/" + Api.PRODUCT_PATH + "/" + PRODUCT_ID).contentType(MediaType.APPLICATION_JSON).
-			body(just(mapper.toModel(productEntity)), Product.class).exchange().
-				expectStatus().isEqualTo(HttpStatus.OK).
-				expectBody().
-					jsonPath("$.name").isEqualTo("Sabre de lumiere".toUpperCase());
+		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
+			jsonPath("$.name").isEqualTo(PRODUCT_NAME).
+			jsonPath("$.weight").isEqualTo(PRODUCT_WEIGHT);
+		
+		Product product = new Product(PRODUCT_ID, PRODUCT_NAME, 50);
+		
+		updateAndVerifyStatus(product, HttpStatus.OK).
+			jsonPath("$.weight").isEqualTo(50);
+		
+		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
+			jsonPath("$.weight").isEqualTo(50);
 	}
 	
 	@Test
 	public void deleteProduct() {
 		
-		client.delete().uri(basePath + "/" + Api.PRODUCT_PATH + "/" + PRODUCT_ID).exchange().
-			expectStatus().isEqualTo(HttpStatus.OK);
+		asciiArt.display("DELETE PRODUCT");
+		
+		deleteAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
+		
+		getAndVerifyStatus(PRODUCT_ID, HttpStatus.NOT_FOUND).
+			jsonPath("$.message").isEqualTo(String.format("Product with productID=%d doesn't not exists.", PRODUCT_ID));
+	}
+	
+	
+	/**
+	 * @param productID
+	 * @param status
+	 * @return {@link BodyContentSpec}
+	 */
+	private BodyContentSpec getAndVerifyStatus(Integer productID, HttpStatus status) {
+		
+		return client.get().uri(basePath + "/" + Api.PRODUCT_PATH + "/" + String.valueOf(productID)).
+			accept(MediaType.APPLICATION_JSON).exchange().
+				expectStatus().isEqualTo(status).
+				expectBody();
+	}
+	
+	/**
+	 * @param params
+	 * @param status
+	 * @return {@link BodyContentSpec}
+	 */
+	private BodyContentSpec getAndVerifyStatus(MultiValueMap<String, String> params, HttpStatus status) {
+		
+		return client.get().uri(builder -> builder.path(basePath + "/" + Api.PRODUCT_PATH).queryParams(params).build()).
+				accept(MediaType.APPLICATION_JSON).exchange().
+				expectStatus().isEqualTo(status).
+				expectBody();
+	}
+
+	/**
+	 * @param product
+	 * @param status
+	 * @return {@link BodyContentSpec}
+	 */
+	private BodyContentSpec createAndVerifyStatus(Product product, HttpStatus status) {
+		
+		return client.post().uri(basePath + "/" + Api.PRODUCT_PATH).body(Mono.just(product), Product.class).
+				accept(MediaType.APPLICATION_JSON).exchange().
+				expectStatus().isEqualTo(status).
+				expectBody();
+	}
+	
+	/**
+	 * @param product
+	 * @param status
+	 * @return {@link BodyContentSpec}
+	 */
+	private BodyContentSpec updateAndVerifyStatus(Product product, HttpStatus status) {
+		
+		return client.put().uri(basePath + "/" + Api.PRODUCT_PATH + "/" + product.getProductID()).
+				body(Mono.just(product), Product.class).
+				accept(MediaType.APPLICATION_JSON).exchange().
+				expectStatus().isEqualTo(status).
+				expectBody();
+	}
+
+	/**
+	 * @param productID
+	 * @param status
+	 * @return {@link BodyContentSpec}
+	 */
+	private BodyContentSpec deleteAndVerifyStatus(Integer productID, HttpStatus status) {
+		
+		return client.delete().uri(basePath + "/" + Api.PRODUCT_PATH + "/" + productID).
+				accept(MediaType.APPLICATION_JSON).exchange().
+				expectStatus().isEqualTo(status).
+				expectBody();
 	}
 }

@@ -1,5 +1,7 @@
 package com.me.microservices.core.review;
 
+import java.util.concurrent.Executors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,9 +17,13 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import com.me.microservices.core.review.mapper.ReviewMapper;
 import com.me.microservices.core.review.mapper.ReviewMapperImpl;
+import com.me.microservices.core.review.repository.ReactiveReviewRepository;
+import com.me.microservices.core.review.repository.ReviewRepository;
 
 import lombok.Getter;
 import lombok.Setter;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -45,6 +51,23 @@ public class Application {
 	@Bean
 	public ReviewMapper reviewMapper() {
 		return new ReviewMapperImpl();
+	}
+	
+	/**
+	 * @return {@link Scheduler}
+	 */
+	@Bean
+	public Scheduler scheduler() {
+		return Schedulers.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+	}
+	
+	/**
+	 * @param reviewRepository
+	 * @return {@link ReactiveReviewRepository}
+	 */
+	@Bean
+	public ReactiveReviewRepository reactiveJpaRepository(ReviewRepository reviewRepository) {
+		return new ReactiveReviewRepository(reviewRepository, scheduler());
 	}
 	
 	/**

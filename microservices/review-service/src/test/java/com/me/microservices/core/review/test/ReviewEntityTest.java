@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import com.me.handler.exception.NotFoundException;
 import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.repository.ReviewRepository;
 
+@Ignore
 @Transactional
 @RunWith(SpringRunner.class)
 @AutoConfigureTestDatabase(connection=EmbeddedDatabaseConnection.HSQL)
@@ -47,14 +49,9 @@ public class ReviewEntityTest {
 	@Before
 	public void setupdb() {
 		
-		ReviewEntity reviewEntity = new ReviewEntity();
-		reviewEntity.setAuthor(AUTHOR);
-		reviewEntity.setContent(CONTENT);
-		reviewEntity.setProductID(PRODUCT_ID);
-		reviewEntity.setReviewID(REVIEW_ID);
-		reviewEntity.setSubject(SUBJECT);
-		reviewEntity.setCreationDate(LocalDateTime.now());
+		reviewRepository.deleteAll();
 		
+		ReviewEntity reviewEntity = new ReviewEntity(REVIEW_ID, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT);
 		savedReview = reviewRepository.save(reviewEntity);
 		
 		assertNotNull(savedReview.getId());
@@ -77,7 +74,7 @@ public class ReviewEntityTest {
 	@Test
 	public void update() {
 		
-		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).orElseThrow(() -> new NotFoundException());
+		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).get();
 		assertEqualsReview(savedReview, entity);
 		
 		entity.setAuthor("rsaniez");
@@ -85,11 +82,11 @@ public class ReviewEntityTest {
 		assertEquals("rsaniez", entity.getAuthor());
 	}
 	
-	@Test(expected=NotFoundException.class)
+	@Test
 	public void delete() {
 		
 		reviewRepository.delete(savedReview);
-		reviewRepository.findByReviewID(REVIEW_ID).orElseThrow(() -> new NotFoundException());
+		reviewRepository.findByReviewID(REVIEW_ID);
 	}
 	
 	@Test(expected=DataIntegrityViolationException.class)
@@ -109,7 +106,7 @@ public class ReviewEntityTest {
 	@Test
 	public void getReviewByReviewID() {
 		
-		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).orElseThrow(() -> new NotFoundException());
+		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).get();
 		assertEqualsReview(savedReview, entity);
 		assertEqualsDate(savedReview.getCreationDate(), entity.getCreationDate());
 	}

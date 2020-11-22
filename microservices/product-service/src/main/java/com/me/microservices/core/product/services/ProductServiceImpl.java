@@ -5,10 +5,11 @@ import java.time.LocalDateTime;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,9 +24,8 @@ import com.me.microservices.core.product.bo.ProductEntity;
 import com.me.microservices.core.product.mapper.ProductMapper;
 import com.me.microservices.core.product.repository.ProductRepository;
 
-import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
-@Slf4j
 @RestController
 public class ProductServiceImpl implements ProductService {
 
@@ -50,85 +50,16 @@ public class ProductServiceImpl implements ProductService {
 	/**
 	 * {@inheritDoc}
 	 */
+	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public ResponseEntity<Product> getProduct(Integer productID) {
+	public Mono<Product> getProduct(Integer productID) {
 		
-		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0");
+		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0.");
 		
-		ProductEntity productEntity = productRepository.findByProductID(productID).
-				orElseThrow(() -> new NotFoundException(String.format("The product with productID=%d doesn't not exists.", productID)));
-		
-		log.debug("The product with productID={} found.", productID);
-			
-		return ResponseEntity.ok(mapper.toModel(productEntity));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public ResponseEntity<Paged<Product>> findByName(String name, Integer pageNumber, Integer pageSize) {
-
-		if(StringUtils.isEmpty(name)) throw new InvalidInputException("Name should not be empty.");
-		if(pageNumber == null) pageNumber = pagination.getPageNumber();
-		if(pageSize == null) pageSize = pagination.getPageSize();
-		
-		Page<ProductEntity> pageOfProducts = productRepository.findByNameStartingWith(name.toUpperCase(), 
-				PageRequest.of(pageNumber, pageSize));
-		
-		log.debug("{} products has been found by name starting with %s.", pageOfProducts.getTotalElements(), name);
-		
-		return ResponseEntity.ok(toPaged(pageOfProducts));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public ResponseEntity<Product> save(Product product) {
-		
-		try {
-			
-			ProductEntity productEntity = mapper.toEntity(product);
-			productEntity.setName(product.getName().toUpperCase());
-			productEntity.setCreationDate(LocalDateTime.now());
-			
-			productEntity = productRepository.save(productEntity);
-			
-			log.debug("This product has been saved : {}.", mapper.toModel(productEntity));
-			
-			return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toModel(productEntity));
-		}
-		catch(DuplicateKeyException e) {
-			throw new InvalidInputException(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
-					product.getProductID(), product.getName()));
-		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public ResponseEntity<Product> update(Product product, Integer productID) {
-		
-		try {
-			
-			ProductEntity productEntity = productRepository.findByProductID(productID).
-					orElseThrow(() -> new NotFoundException(String.format("Product with productID=%d doesn't not exists.", productID)));
-			
-			productEntity.setName(product.getName().toUpperCase());
-			productEntity.setWeight(product.getWeight());
-			productEntity.setUpdateDate(LocalDateTime.now());
-			
-			productEntity = productRepository.save(productEntity);
-			
-			log.debug("This product has been updated : {}.", mapper.toModel(productEntity).toString());
-			
-			return ResponseEntity.ok(mapper.toModel(productEntity));
-		}
-		catch(DuplicateKeyException e) {
-			throw new InvalidInputException(String.format("Duplicate key : check the name (%s) of product.", product.getName()));
-		}
+		return productRepository.findByProductID(productID).
+			switchIfEmpty(Mono.error(new NotFoundException(String.format("Product with productID=%d doesn't not exists.", productID)))).
+			log().
+			map(mapper::toModel);
 	}
 
 	/**
@@ -136,29 +67,85 @@ public class ProductServiceImpl implements ProductService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public void deleteProduct(Integer productID) {
+	public Mono<Paged<Product>> findByName(String name, Integer pageNumber, Integer pageSize) {
 
-		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0");
+		if(StringUtils.isEmpty(name)) throw new InvalidInputException("Name should not be empty.");
 		
-		ProductEntity productEntity = productRepository.findByProductID(productID).
-				orElseThrow(() -> new NotFoundException(String.format("Product with productID=%d doesn't not exists", productID)));
-			
-		productRepository.delete(productEntity);
+		if(pageNumber == null || pageNumber < 0) pageNumber = pagination.getPageNumber();
+		if(pageSize == null || pageSize < 1) pageSize = pagination.getPageSize();
 		
-		log.info("This product has been deleted : {}.", mapper.toModel(productEntity).toString());
+		final Integer pSize = pageSize;
+		
+		final Pageable page = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.ASC, "name", "productID"));
+		
+		return productRepository.countByNameStartingWith(name.toUpperCase()).
+				flatMap(count -> productRepository.findByNameStartingWith(name.toUpperCase(), page).log().
+				map(mapper::toModel).
+				collectList().map(list -> new Paged<Product>(list, 
+						new PageMetadata(page.getPageSize(), count, count < pSize ? 1 : count % pSize == 0 ? count/pSize : ((count/pSize) + 1), page.getPageNumber()))));
 	}
-	
+
 	/**
-	 * @param pageOfProductEntity
-	 * @return page of {@link ProductEntity}
+	 * {@inheritDoc}
 	 */
-	private Paged<Product> toPaged(Page<ProductEntity> pageOfProductEntity) {
+	@ResponseStatus(value=HttpStatus.CREATED)
+	@Override
+	public Mono<Product> save(Product product) {
+			
+		if(product.getProductID() < 1) throw new InvalidInputException("ProductID should be greater than 0.");
+		if(product.getName().isEmpty()) throw new InvalidInputException("Product name should be not empty.");
 		
-		Page<Product> pageOfProductModel = pageOfProductEntity.map(r -> mapper.toModel(r));
+		ProductEntity productEntity = mapper.toEntity(product);
+		productEntity.setName(product.getName().toUpperCase());
+		productEntity.setCreationDate(LocalDateTime.now());
 		
-		PageMetadata metadata = new PageMetadata(pageOfProductModel.getSize(), pageOfProductModel.getTotalElements(), 
-				pageOfProductModel.getTotalPages(), pageOfProductModel.getNumber());
+		return productRepository.save(productEntity).
+				onErrorMap(DuplicateKeyException.class, e -> new InvalidInputException(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
+						product.getProductID(), product.getName()))).
+				log().
+				map(mapper::toModel);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@ResponseStatus(value=HttpStatus.OK)
+	@Override
+	public Mono<Product> update(Product product, Integer productID) {
 		
-		return new Paged<>(pageOfProductModel.getContent(), metadata);
+		if(product.getProductID() < 1) throw new InvalidInputException("ProductID should be greater than 0.");
+		if(product.getName().isEmpty()) throw new InvalidInputException("Product name should be not empty.");
+		
+		return productRepository.findByProductID(productID).
+				switchIfEmpty(Mono.error(new NotFoundException(String.format("Product with productID=%d doesn't not exists.", productID)))).
+				log().
+				map(entity -> {
+					
+					entity.setName(product.getName().toUpperCase());
+					entity.setWeight(product.getWeight());
+					entity.setUpdateDate(LocalDateTime.now());
+					return entity;
+				}).
+				flatMap(entity -> productRepository.save(entity).
+						onErrorMap(DuplicateKeyException.class, e -> new InvalidInputException(String.
+								format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
+										product.getProductID(), product.getName()))).
+						log()).
+				map(mapper::toModel);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@ResponseStatus(value=HttpStatus.OK)
+	@Override
+	public Mono<Void> deleteProduct(Integer productID) {
+
+		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0.");
+		
+		return productRepository.findByProductID(productID).
+			switchIfEmpty(Mono.error(new NotFoundException(String.format("Product with productID=%d doesn't not exists.", productID)))).
+			log().
+			flatMap(entity -> productRepository.delete(entity));
 	}
 }

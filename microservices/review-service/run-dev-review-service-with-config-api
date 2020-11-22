@@ -1,9 +1,0 @@
-#!/bin/bash
-
-set -e 
-
-cd $(dirname $0)
-
-docker run --rm -d -p 8083:8083 --mount src=$(pwd)/config/,target=/etc/me,type=bind -ti -e JAVA_OPTS="-Xms512M -Xmx512M" review-service
-
-cd -
