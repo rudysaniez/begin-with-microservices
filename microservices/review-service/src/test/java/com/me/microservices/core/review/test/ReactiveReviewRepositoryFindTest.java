@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.repository.ReactiveReviewRepository;
 import com.me.microservices.core.review.service.AsciiArtService;
 
+@Ignore
 @AutoConfigureTestDatabase(connection=EmbeddedDatabaseConnection.HSQL)
 @Transactional
 @Commit

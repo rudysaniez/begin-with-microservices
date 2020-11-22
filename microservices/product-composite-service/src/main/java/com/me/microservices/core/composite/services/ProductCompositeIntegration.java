@@ -139,7 +139,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 		return reviewClient.get().uri(uri -> uri.pathSegment(Api.REVIEW_PATH).queryParams(params).build()).
 				accept(MediaType.APPLICATION_JSON).retrieve().
 				bodyToMono(new ParameterizedTypeReference<Paged<Review>>() {}).log().
-				onErrorMap(WebClientResponseException.class, e -> handleHttpClientException(e));
+				onErrorResume(e -> Mono.empty());
 	}
 
 	/**
@@ -209,7 +209,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 		return recommendationClient.get().uri(uriFunction -> uriFunction.pathSegment(Api.RECOMMENDATION_PATH).queryParams(params).build()).
 				accept(MediaType.APPLICATION_JSON).retrieve().
 				bodyToMono(new ParameterizedTypeReference<Paged<Recommendation>>() {}).log().
-				onErrorMap(WebClientResponseException.class, e -> handleHttpClientException(e));
+				onErrorResume(e -> Mono.empty());
 	}
 
 	/**
