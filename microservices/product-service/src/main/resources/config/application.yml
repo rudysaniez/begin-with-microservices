@@ -38,8 +38,8 @@ server.port: 8081
 
 logging:
   level:
-    com.me.work.example.microservices.core.product: DEBUG
-    com.me.work.example.handler.http: DEBUG
+    '[com.me.work.example.microservices.core.product]': DEBUG
+    '[com.me.work.example.handler.http]': DEBUG
     
 spring:
   data:

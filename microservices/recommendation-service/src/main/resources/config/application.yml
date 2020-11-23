@@ -41,8 +41,8 @@ server.port: 8082
   
 logging:
   level:
-    com.me.work.example.microservices.core.recommendation: DEBUG
-    com.me.work.example.handler.http: DEBUG
+    '[com.me.work.example.microservices.core.recommendation]': DEBUG
+    '[com.me.work.example.handler.http]': DEBUG
 
 spring:
   data:

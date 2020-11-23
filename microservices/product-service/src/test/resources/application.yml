@@ -2,5 +2,5 @@
 logging:
   level:
     root: INFO
-    com.me.microservices.core.product: DEBUG
-    com.me.handler.http: DEBUG
+    '[com.me.microservices.core.product]': DEBUG
+    '[com.me.handler.http]': DEBUG
