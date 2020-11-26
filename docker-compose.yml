@@ -3,34 +3,14 @@ version: "2.1"
   
 services:
   
-  mongodb:
-    image: mongo:3.2.4
-    container_name: mongodb
-    mem_limit: 350m
-    command: --smallfiles
-  
-  reviews-db:
-    image: mysql:latest
-    container_name: reviews-db
-    mem_limit: 350m
-    environment:
-      - MYSQL_ROOT_PASSWORD=welcome
-      - MYSQL_USER=michael
-      - MYSQL_PASSWORD=jordan
-      - MYSQL_DATABASE=reviewsdb
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-umichael", "-pjordan", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    
   product:
     build: microservices/product-service
     mem_limit: 350M
     ports:
       - "9081:8081"
-    depends_on:
-      - mongodb
+    depends_on: 
+      mongodb:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256M -Xmx256M
@@ -40,8 +20,9 @@ services:
     mem_limit: 350M
     ports:
       - "9082:8082"
-    depends_on:
-      - mongodb
+    depends_on: 
+      mongodb:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256M -Xmx256M
@@ -70,3 +51,31 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker,product-composite-swagger
       - JAVA_OPTS=-Xms256M -Xmx256M
+      
+  mongodb:
+    image: mongo:3.2.4
+    container_name: mongodb
+    mem_limit: 350m
+    ports:
+      - 27017:27017
+    command: mongod --smallfiles
+    healthcheck:
+      test: "mongo --eval 'db.stats().ok'"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  
+  reviews-db:
+    image: mysql:latest
+    container_name: reviews-db
+    mem_limit: 350m
+    environment:
+      - MYSQL_ROOT_PASSWORD=welcome
+      - MYSQL_USER=michael
+      - MYSQL_PASSWORD=jordan
+      - MYSQL_DATABASE=reviewsdb
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-umichael", "-pjordan", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
