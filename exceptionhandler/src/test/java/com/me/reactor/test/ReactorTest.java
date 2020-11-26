@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.me.handler.exception.NotFoundException;
@@ -27,6 +28,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+@Ignore
 public class ReactorTest {
 
 	@Test

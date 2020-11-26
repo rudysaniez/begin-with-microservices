@@ -1,6 +1,7 @@
 package com.me.microservices.core.product.test;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import com.me.microservices.core.product.repository.ProductRepository;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+@Ignore
 @DataMongoTest
 @RunWith(SpringRunner.class)
 public class ProductEntityTest1 {
