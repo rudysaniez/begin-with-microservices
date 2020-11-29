@@ -7,13 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.me.api.composite.ProductAggregate;
+import com.me.api.composite.ProductComposite;
+import com.me.api.composite.ProductCompositeService;
 import com.me.api.core.common.Paged;
-import com.me.api.core.composite.ProductAggregate;
-import com.me.api.core.composite.ProductComposite;
-import com.me.api.core.composite.ProductCompositeService;
 import com.me.api.core.product.Product;
 import com.me.api.core.recommendation.Recommendation;
 import com.me.api.core.review.Review;
+import com.me.handler.exception.DeletionException;
 import com.me.handler.exception.InvalidInputException;
 import com.me.microservices.core.composite.Application.PaginationInformation;
 import com.me.microservices.core.composite.mapper.PagedMapper;
@@ -83,8 +84,17 @@ public class ProductCompositeServiceImpl implements ProductCompositeService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public Mono<Void> deleteCompositeProduct(Integer productID) {
-		throw new UnsupportedOperationException("An event will be sent (Asynchronous event-driven).");
+	public void deleteCompositeProduct(Integer productID) {
+		
+		try {
+			
+			integration.deleteProductAsync(productID);
+			integration.deleteRecommendationsAsync(productID);
+			integration.deleteReviewsAsync(productID);
+		}
+		catch(Exception e) {
+			throw new DeletionException("Deletion has failed", e);
+		}
 	}
 
 	/**

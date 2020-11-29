@@ -15,4 +15,14 @@ spring:
       database: recommendationsdb
       port: 27017
       
+  cloud:
+    stream:
+      default-binder: rabbit
+      
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: michael
+    password: jordan
+      
 server.port: 8082

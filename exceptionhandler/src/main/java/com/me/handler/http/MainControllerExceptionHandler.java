@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.me.handler.exception.AlreadyExistsException;
+import com.me.handler.exception.DeletionException;
 import com.me.handler.exception.InvalidInputException;
 import com.me.handler.exception.NotFoundException;
 
@@ -57,10 +58,10 @@ public class MainControllerExceptionHandler {
 	 * @param ex
 	 * @return {@link HttpErrorInfo}
 	 */
-	@ResponseStatus(value=HttpStatus.SERVICE_UNAVAILABLE)
-	@ExceptionHandler(UnsupportedOperationException.class)
-	public @ResponseBody HttpErrorInfo handlerUnsupportedOperationException(ServerHttpRequest request, Exception ex) {
-		return createHttpErrorInfo(HttpStatus.SERVICE_UNAVAILABLE, request, ex);
+	@ResponseStatus(value=HttpStatus.UNPROCESSABLE_ENTITY)
+	@ExceptionHandler(DeletionException.class)
+	public @ResponseBody HttpErrorInfo handlerDeletionException(ServerHttpRequest request, Exception ex) {
+		return createHttpErrorInfo(HttpStatus.UNPROCESSABLE_ENTITY, request, ex);
 	}
 	
 	/**

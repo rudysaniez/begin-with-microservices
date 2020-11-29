@@ -2,9 +2,9 @@ package com.me.microservices.core.composite.mapper;
 
 import org.mapstruct.Mapper;
 
+import com.me.api.composite.RecommendationSummary;
+import com.me.api.composite.ReviewSummary;
 import com.me.api.core.common.Paged;
-import com.me.api.core.composite.RecommendationSummary;
-import com.me.api.core.composite.ReviewSummary;
 import com.me.api.core.recommendation.Recommendation;
 import com.me.api.core.review.Review;
 

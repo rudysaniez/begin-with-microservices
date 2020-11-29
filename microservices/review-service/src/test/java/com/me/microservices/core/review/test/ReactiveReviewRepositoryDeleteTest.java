@@ -42,6 +42,7 @@ public class ReactiveReviewRepositoryDeleteTest {
 	private static final String SUBJECT = "Washing machine";
 	private static final String CONTENT = "Good product. The installation is simply.";
 	private static final String AUTHOR = "rudysaniez";
+	private static final Integer PRODUCT_ID = 1;
 	
 	private static final Integer MAX_REVIEW_IN_SETUP_STEP = 100;
 	
@@ -53,7 +54,7 @@ public class ReactiveReviewRepositoryDeleteTest {
 		repo.deleteAllEntities().block();
 		
 		IntStream.rangeClosed(1, MAX_REVIEW_IN_SETUP_STEP).
-			mapToObj(id -> new ReviewEntity(id, 1, AUTHOR + id, SUBJECT + id, CONTENT + id)).
+			mapToObj(id -> new ReviewEntity(id, PRODUCT_ID, AUTHOR + id, SUBJECT + id, CONTENT + id)).
 			forEach(review -> repo.save(review).block());
 	}
 	

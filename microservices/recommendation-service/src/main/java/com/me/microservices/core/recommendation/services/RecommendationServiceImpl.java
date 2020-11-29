@@ -137,14 +137,10 @@ public class RecommendationServiceImpl implements RecommendationService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public Mono<Void> deleteRecommendation(Integer recommendationID) {
+	public Mono<Void> deleteRecommendations(Integer productID) {
 		
-		if(recommendationID < 1) throw new InvalidInputException("RecommendationID should be greater than 0");
+		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0");
 		
-		return recommendationRepository.findByRecommendationID(recommendationID).
-			switchIfEmpty(Mono.error(new NotFoundException(String.format("Recommendation with recommendationID=%d doesn't not exists.",
-					recommendationID)))).
-			log().
-			flatMap(entity -> recommendationRepository.delete(entity));
+		return recommendationRepository.deleteByProductID(productID);
 	}
 }

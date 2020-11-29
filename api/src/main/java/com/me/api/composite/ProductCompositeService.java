@@ -1,4 +1,4 @@
-package com.me.api.core.composite;
+package com.me.api.composite;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,5 +33,5 @@ public interface ProductCompositeService {
 	 * @param productID
 	 */
 	@DeleteMapping(value=Api.PRODUCT_COMPOSITE_PATH + "/{productId}")
-	public Mono<Void> deleteCompositeProduct(@PathVariable(name="productId", required=true) Integer productID);
+	public void deleteCompositeProduct(@PathVariable(name="productId", required=true) Integer productID);
 }

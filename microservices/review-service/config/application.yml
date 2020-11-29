@@ -1,7 +1,3 @@
-
----
-spring.profiles: dev
-
 logging:
   level:
     root: INFO
@@ -11,7 +7,10 @@ logging:
     '[org.hibernate.cache]': DEBUG
     '[org.springframework.cache]': DEBUG
     '[org.hibernate.type.descriptor.sql.BasicBinder]': TRACE
-    
+
+---
+spring.profiles: dev
+
 spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
@@ -30,5 +29,15 @@ spring:
     change-log: classpath:liquibase/create-tables.xml
     default-schema: reviewsdb
     enabled: true
+    
+  cloud:
+    stream:
+      default-binder: rabbit
+      
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: michael
+    password: jordan
     
 server.port: 8083

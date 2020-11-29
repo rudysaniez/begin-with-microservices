@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e 
+
+docker run -d --name rabbitmq-main -p 5672:5672 -e RABBITMQ_DEFAULT_USER="michael" -e RABBITMQ_DEFAULT_PASS="jordan" rabbitmq:3.7.8-management

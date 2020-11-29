@@ -1,16 +1,23 @@
 package com.me.microservices.core.product.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNull;
+
 import java.util.stream.IntStream;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.system.OutputCaptureRule;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec;
@@ -19,11 +26,14 @@ import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
 import com.me.api.core.product.Product;
+import com.me.api.event.Event;
 import com.me.microservices.core.product.repository.ProductRepository;
 import com.me.microservices.core.product.services.AsciiArtService;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
 public class ProductServiceTest {
@@ -39,6 +49,12 @@ public class ProductServiceTest {
 	
 	@Value("${spring.webflux.base-path}") 
 	private String basePath;
+	
+	@Autowired
+	private Sink channel;
+	
+	@Rule
+	public OutputCaptureRule output = new OutputCaptureRule();
 	
 	private static final String PRODUCT_NAME = "PANNEAU SOLAIRE";
 	private static final Integer PRODUCT_ID = 1;
@@ -204,6 +220,23 @@ public class ProductServiceTest {
 			jsonPath("$.message").isEqualTo(String.format("Product with productID=%d doesn't not exists.", PRODUCT_ID));
 	}
 	
+	@Test
+	public void deleteProductAsynchronous() {
+		
+		asciiArt.display("DELETE PRODUCT ASYNCHRONOUS");
+		
+		sendDeleteProductEvent(20);
+		assertNull(productRepository.findByProductID(20).block());
+	}
+	
+	@Test
+	public void deleteProductAsyncNotFoundException() {
+		
+		asciiArt.display("DELETE PRODUCT ASYNC BUT NOT FOUND EXCEPTION");
+		
+		sendDeleteProductEvent(999);
+		assertThat(output).contains(String.format("The product with id=%d can't be deleted because it doesn't not exists.", 999));
+	}
 	
 	/**
 	 * @param productID
@@ -269,5 +302,15 @@ public class ProductServiceTest {
 				accept(MediaType.APPLICATION_JSON).exchange().
 				expectStatus().isEqualTo(status).
 				expectBody();
+	}
+	
+	/**
+	 * @param productId
+	 */
+	public void sendDeleteProductEvent(Integer productId) {
+		
+		Event<Integer, Product> event = new Event<Integer, Product>(productId, null, Event.Type.DELETE);
+		log.info(" > One message will be sent for a product deletion ({}).", event.toString());
+		channel.input().send(MessageBuilder.withPayload(event).build());
 	}
 }

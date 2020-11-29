@@ -1,4 +1,4 @@
-package com.me.api.core.composite;
+package com.me.api.composite;
 
 import com.me.api.core.common.Paged;
 

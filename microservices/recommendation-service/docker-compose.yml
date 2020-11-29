@@ -11,12 +11,14 @@ services:
     depends_on: 
       mongodb:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker,recommendation-swagger
       - JAVA_OPTS=-Xms512M -Xmx512M
       
   mongodb:
-    image: mongo:3.2.4
+    image: mongo:3.6.9
     container_name: mongodb
     mem_limit: 350m
     ports:
@@ -24,6 +26,21 @@ services:
     command: mongod --smallfiles
     healthcheck:
       test: "mongo --eval 'db.stats().ok'"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      
+  rabbitmq:
+    image: rabbitmq:3.7.8-management
+    mem_limit: 350m
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=michael
+      - RABBITMQ_DEFAULT_PASS=jordan
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
       timeout: 5s
       retries: 10

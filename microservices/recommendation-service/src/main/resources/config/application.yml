@@ -26,6 +26,19 @@ spring:
   webflux:
     base-path: /api/v1
     
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: recommendations
+          content-type: application/json
+          group: recommendationsGroup
+          consumer:
+            max-attempts: 3
+            back-off-initial-interval: 500
+            back-off-max-interval: 1000
+            back-off-multiplier: 2.0
+    
 api:
   information:
     version: 1
@@ -50,6 +63,16 @@ spring:
       host: mongodb
       database: recommendationsdb
       port: 27017
+      
+  cloud:
+    stream:
+      default-binder: rabbit
+      
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: michael
+    password: jordan
     
 ---
 spring.profiles: recommendation-swagger

@@ -2,6 +2,6 @@
 logging:
   level:
     root: INFO
-    '[com.me.microservices.core.product]': DEBUG
+    '[com.me.microservices.core.recommendation]': DEBUG
     '[com.me.handler.http]': DEBUG
     '[org.springframework.data.mongodb.core.MongoTemplate]': DEBUG

@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
-import com.me.api.core.composite.RecommendationSummary;
+import com.me.api.composite.RecommendationSummary;
 import com.me.api.core.recommendation.Recommendation;
 
 @Mapper

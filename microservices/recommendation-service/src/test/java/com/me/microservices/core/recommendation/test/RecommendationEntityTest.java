@@ -76,10 +76,10 @@ public class RecommendationEntityTest {
 	}
 	
 	@Test
-	public void delete() {
+	public void deleteRecommendationByProductId() {
 		
-		recommendationRepository.delete(savedRecommendation).block();
-		StepVerifier.create(recommendationRepository.findByRecommendationID(RECOMMENDATION_ID)).verifyComplete();
+		recommendationRepository.deleteByProductID(PRODUCT_ID).block();
+		assertThat(recommendationRepository.findByProductID(PRODUCT_ID, PageRequest.of(0, 1)).collectList().block()).isEmpty();
 	}
 	
 	@Test

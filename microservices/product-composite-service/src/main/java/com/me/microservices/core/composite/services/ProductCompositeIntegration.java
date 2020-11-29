@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -18,13 +19,18 @@ import com.me.api.Api;
 import com.me.api.core.common.Paged;
 import com.me.api.core.product.Product;
 import com.me.api.core.product.ProductService;
+import com.me.api.core.product.async.ProductAsyncService;
 import com.me.api.core.recommendation.Recommendation;
 import com.me.api.core.recommendation.RecommendationService;
+import com.me.api.core.recommendation.async.RecommendationAsyncService;
 import com.me.api.core.review.Review;
 import com.me.api.core.review.ReviewService;
+import com.me.api.core.review.async.ReviewAsyncService;
+import com.me.api.event.Event;
 import com.me.handler.exception.InvalidInputException;
 import com.me.handler.exception.NotFoundException;
 import com.me.handler.http.HttpErrorInfo;
+import com.me.microservices.core.composite.producer.MessageProcessor;
 
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -34,26 +40,18 @@ import reactor.core.publisher.Mono;
  */
 @Slf4j
 @Component
-public class ProductCompositeIntegration implements ProductService, RecommendationService, ReviewService {
+public class ProductCompositeIntegration implements ProductService, ProductAsyncService, 
+													RecommendationService, RecommendationAsyncService, 
+													ReviewService, ReviewAsyncService {
 
 	private final ObjectMapper jack;
 	private final WebClient productClient;
 	private final WebClient recommendationClient;
 	private final WebClient reviewClient;
+	private final MessageProcessor messageProcessor;
 
-	/**
-	 * @param jack
-	 * @param webClientBuilder
-	 * @param productServiceHost
-	 * @param productServicePort
-	 * @param recommendationServiceHost
-	 * @param recommendationServicePort
-	 * @param reviewServiceHost
-	 * @param reviewServicePort
-	 * @param basePath
-	 */
 	@Autowired
-	public ProductCompositeIntegration(ObjectMapper jack, WebClient.Builder webClientBuilder,
+	public ProductCompositeIntegration(ObjectMapper jack, WebClient.Builder webClientBuilder, MessageProcessor messageProcessor,
 			
 			@Value("${app.product-service.host}") String productServiceHost,
 			@Value("${app.product-service.port}") int productServicePort,
@@ -67,6 +65,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 			@Value("${spring.webflux.base-path}") String basePath) {
 		
 		this.jack = jack;
+		this.messageProcessor = messageProcessor;
 		
 		/**
 		 * Product url configuration.
@@ -169,11 +168,22 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Mono<Void> deleteReview(Integer reviewID) {
+	public Mono<Void> deleteReviews(Integer reviewID) {
 		
 		return reviewClient.delete().uri(uriFunction -> uriFunction.pathSegment(Api.REVIEW_PATH, String.valueOf(reviewID)).build()).
 				retrieve().bodyToMono(Void.class).log().
 				onErrorMap(WebClientResponseException.class, e -> handleHttpClientException(e));
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void deleteReviewsAsync(Integer productID) {
+		
+		Event<Integer, Review> event = new Event<Integer, Review>(productID, Event.Type.DELETE);
+		log.info(" > A review delete event will be sent : {}", event);
+		messageProcessor.outputReviews().send(MessageBuilder.withPayload(event).build());
 	}
 
 	/**
@@ -240,14 +250,25 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Mono<Void> deleteRecommendation(Integer recommendationID) {
+	public Mono<Void> deleteRecommendations(Integer recommendationID) {
 		
 		return recommendationClient.delete().uri(uriFunction -> uriFunction.pathSegment(Api.RECOMMENDATION_PATH, String.valueOf(recommendationID)).build()).
 				accept(MediaType.APPLICATION_JSON).retrieve().
 				bodyToMono(Void.class).log().
 				onErrorMap(WebClientResponseException.class, e -> handleHttpClientException(e));
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void deleteRecommendationsAsync(Integer productID) {
+		
+		Event<Integer, Recommendation> event = new Event<>(productID, Event.Type.DELETE);
+		log.info(" > A recommendation delete event will be sent : {}", event);
+		messageProcessor.outputRecommendations().send(MessageBuilder.withPayload(event).build());
+	}
+	
 	/**
 	 * Product implementation part.
 	 */
@@ -318,6 +339,17 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 		return productClient.delete().uri(uriFunction -> uriFunction.pathSegment(Api.PRODUCT_PATH, String.valueOf(productID)).build()).
 				accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(Void.class).log().
 				onErrorMap(WebClientResponseException.class, e -> handleHttpClientException(e));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void deleteProductAsync(Integer productID) {
+		
+		Event<Integer, Product> event = new Event<>(productID, Event.Type.DELETE);
+		log.info(" > A product delete event will be sent : {}", event);
+		messageProcessor.outputProducts().send(MessageBuilder.withPayload(event).build());
 	}
 
 	/**

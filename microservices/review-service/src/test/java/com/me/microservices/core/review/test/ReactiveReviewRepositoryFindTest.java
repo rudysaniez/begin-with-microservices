@@ -65,7 +65,7 @@ public class ReactiveReviewRepositoryFindTest {
 	@Test
 	public void findByReviewID() {
 		
-		asciiArt.display("FIND  BY  REVIEW  ID");
+		asciiArt.display("FIND BY REVIEW ID");
 		
 		Page<ReviewEntity> pageOfReviews = repo.findByProductID(2, PageRequest.of(0, 20, Sort.by(Direction.ASC, "reviewID"))).block();
 		

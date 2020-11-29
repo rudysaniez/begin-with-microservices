@@ -26,6 +26,19 @@ spring:
   webflux:
     base-path: /api/v1
     
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: products
+          content-type: application/json
+          group: productsGroup
+          consumer:
+            max-attempts: 3
+            back-off-initial-interval: 500
+            back-off-max-interval: 1000
+            back-off-multiplier: 2.0
+    
 api:
   pagination:
     pageNumber: 0
@@ -47,6 +60,16 @@ spring:
       host: mongodb
       database: productsdb
       port: 27017
+      
+  cloud:
+    stream:
+      default-binder: rabbit
+      
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: michael
+    password: jordan
     
 ---
 spring.profiles: product-swagger

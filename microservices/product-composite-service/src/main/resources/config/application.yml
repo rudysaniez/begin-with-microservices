@@ -39,6 +39,27 @@ spring:
   webflux:
     base-path: /api/v1
     
+  cloud:
+    stream:
+      bindings:
+        output-products:
+          destination: products
+          producer:
+            required-groups: 
+              - auditGroup
+            
+        output-recommendations:
+          destination: recommendations
+          producer:
+            required-groups: 
+              - auditGroup
+            
+        output-reviews:
+          destination: reviews
+          producer:
+            required-groups:
+              - auditGroup
+              
 api.pagination:
   page-number: 0
   page-size: 5
@@ -48,6 +69,22 @@ spring.profiles: docker
 
 server.port: 9080
 
+logging:
+  level:
+    '[com.me.work.example.microservices.core.composite]': DEBUG
+    '[com.me.work.example.handler.http]': DEBUG
+    
+spring:
+  cloud:
+    stream:
+      default-binder: rabbit
+      
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: michael
+    password: jordan    
+    
 app:
   product-service:
     host: product
@@ -61,11 +98,6 @@ app:
     host: review
     port: 8083
 
-logging:
-  level:
-    com.me.work.example.microservices.core.composite: DEBUG
-    com.me.work.example.handler.http: DEBUG
-    
 ---
 spring.profiles: product-composite-swagger
 
