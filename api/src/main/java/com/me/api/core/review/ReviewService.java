@@ -50,8 +50,8 @@ public interface ReviewService {
 	public Mono<Review> update(@RequestBody Review review, @PathVariable(name="reviewID", required=true) Integer reviewID);
 	
 	/**
-	 * @param reviewID
+	 * @param productID
 	 */
-	@DeleteMapping(value=Api.REVIEW_PATH + "/{reviewID}")
-	public Mono<Void> deleteReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
+	@DeleteMapping(value=Api.REVIEW_PATH + "/{productID}")
+	public Mono<Void> deleteReviews(@PathVariable(name="productID", required=true) Integer productID);
 }

@@ -1,8 +1,11 @@
 package com.me.microservices.core.review.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.stream.IntStream;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +14,12 @@ import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.system.OutputCaptureRule;
+import org.springframework.cloud.stream.messaging.Sink;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -23,12 +30,15 @@ import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
 import com.me.api.core.review.Review;
+import com.me.api.event.Event;
 import com.me.microservices.core.review.repository.ReactiveReviewRepository;
 import com.me.microservices.core.review.repository.ReviewRepository;
 import com.me.microservices.core.review.service.AsciiArtService;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @AutoConfigureTestDatabase(connection=EmbeddedDatabaseConnection.HSQL)
 @RunWith(SpringRunner.class)
 @Transactional
@@ -50,6 +60,12 @@ public class ReviewServiceTest {
 	
 	@Value("${spring.webflux.base-path}") 
 	String basePath;
+	
+	@Autowired
+	private Sink channel;
+	
+	@Rule
+	public OutputCaptureRule output = new OutputCaptureRule();
 	
 	private static final Integer REVIEW_ID = 1;
 	private static final Integer PRODUCT_ID = 1;
@@ -157,30 +173,48 @@ public class ReviewServiceTest {
 	@Test
 	public void deleteReview() {
 		
-		asciiArt.display("DELETE REVIEW BY REVIEW ID");
+		asciiArt.display("DELETE REVIEW BY PRODUCT ID");
 		
-		deleteAndVerifyStatus(REVIEW_ID, HttpStatus.OK);
+		deleteAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
+		
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
+		params.add("productId", PRODUCT_ID.toString());
+		params.add("pageNumber", "0");
+		params.add("pageSize", "5");
+		
+		getAndVerifyStatus(params, HttpStatus.OK).
+			jsonPath("$.content.length()").isEqualTo(0);
 	}
 	
 	@Test
-	public void deleteReviewNotFoundException() {
+	public void deleteReviewBadRequest() {
 		
-		asciiArt.display("DELETE REVIEW BUT NOT FOUND EXCEPTION");
+		asciiArt.display("DELETE REVIEW BUT BAD REQUEST");
 		
-		deleteAndVerifyStatus(999, HttpStatus.NOT_FOUND).
-			jsonPath("$.message").isEqualTo(String.format("Review with reviewID=%d doesn't not exists.", 999));
+		deleteAndVerifyStatus(null, HttpStatus.BAD_REQUEST);
 	}
 	
 	@Test
 	public void deleteReviewInvalidInputException() {
 		
-		asciiArt.display("DELETE REVIEW BUT INVALID INPUT EXCEPTION");
+		asciiArt.display("DELETE REVIEW BUT INVALID INPUT");
 		
 		deleteAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
-			jsonPath("$.message").isEqualTo("ReviewID should be greater than 0.");
+			jsonPath("$.message").isEqualTo("ProductID should be greater than 0.");
 	}
 	
+	@Test
+	public void deleteReviewAsynchronous() {
+		
+		asciiArt.display("DELETE REVIEW SYNCHRONOUS");
+		
+		sendDeleteReviewEvent(PRODUCT_ID);
+		assertThat(reviewRepository.findByProductID(PRODUCT_ID, PageRequest.of(0, 10)).getContent()).isEmpty();
+		
+		assertThat(output).contains(String.format(" > The review(s) with productID=%d has been deleted", PRODUCT_ID));
+	}
 	
+
 	/**
 	 * @param reviewID
 	 * @param status
@@ -231,5 +265,15 @@ public class ReviewServiceTest {
 				accept(MediaType.APPLICATION_JSON).exchange().
 				expectStatus().isEqualTo(status).
 				expectBody();
+	}
+	
+	/**
+	 * @param reviewId
+	 */
+	public void sendDeleteReviewEvent(Integer reviewId) {
+		
+		Event<Integer, Review> event = new Event<>(reviewId, null, Event.Type.DELETE);
+		log.info(" > One message will be sent for a review deletion ({}).", event.toString());
+		channel.input().send(MessageBuilder.withPayload(event).build());
 	}
 }

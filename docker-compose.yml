@@ -11,6 +11,8 @@ services:
     depends_on: 
       mongodb:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256M -Xmx256M
@@ -23,6 +25,8 @@ services:
     depends_on: 
       mongodb:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256M -Xmx256M
@@ -34,6 +38,8 @@ services:
       - "9083:8083"
     depends_on:
       reviews-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -53,7 +59,7 @@ services:
       - JAVA_OPTS=-Xms256M -Xmx256M
       
   mongodb:
-    image: mongo:3.2.4
+    image: mongo:3.6.9
     container_name: mongodb
     mem_limit: 350m
     ports:
@@ -69,6 +75,8 @@ services:
     image: mysql:latest
     container_name: reviews-db
     mem_limit: 350m
+    ports:
+      - 3306:3306
     environment:
       - MYSQL_ROOT_PASSWORD=welcome
       - MYSQL_USER=michael
@@ -76,6 +84,21 @@ services:
       - MYSQL_DATABASE=reviewsdb
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-umichael", "-pjordan", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      
+  rabbitmq:
+    image: rabbitmq:3.7.8-management
+    mem_limit: 350m
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=michael
+      - RABBITMQ_DEFAULT_PASS=jordan
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
       timeout: 5s
       retries: 10

@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -101,17 +102,35 @@ public class ProductCompositeTest {
 		params.add("pageNumber", String.valueOf(pagination.getPageNumber()));
 		params.add("pageSize", String.valueOf(pagination.getPageSize()));
 		
-		client.get().uri(uri -> uri.pathSegment("api", "v1", Api.PRODUCT_COMPOSITE_PATH, PRODUCT_ID.toString()).queryParams(params).build()).
-			accept(MediaType.APPLICATION_JSON).exchange().
-				expectStatus().isEqualTo(HttpStatus.OK).
-				expectBody().
-					jsonPath("$.name").isEqualTo(PRODUCT_NAME).
-					jsonPath("$.recommendations.content[0].recommendationID").isEqualTo(1).
-					jsonPath("$.reviews.content[0].reviewID").isEqualTo(1);
+		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
+			jsonPath("$.name").isEqualTo(PRODUCT_NAME).
+			jsonPath("$.recommendations.content[0].recommendationID").isEqualTo(1).
+			jsonPath("$.reviews.content[0].reviewID").isEqualTo(1);
 	}
 	
 	@Test
-	public void getProduct() {
+	public void getProductNotFoundException() {
+		
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
+		params.add("pageNumber", String.valueOf(pagination.getPageNumber()));
+		params.add("pageSize", String.valueOf(pagination.getPageSize()));
+		
+		getAndVerifyStatus(PRODUCT_NOT_FOUND, HttpStatus.NOT_FOUND).
+		jsonPath("$.message").isEqualTo(String.format("The product %d doesn't not exist", PRODUCT_NOT_FOUND));
+	}
+	
+	@Test
+	public void getProductInvalidInputException() {
+		
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
+		params.add("pageNumber", String.valueOf(pagination.getPageNumber()));
+		params.add("pageSize", String.valueOf(pagination.getPageSize()));
+		
+		getAndVerifyStatus(PRODUCT_INVALID_INPUT, HttpStatus.UNPROCESSABLE_ENTITY);
+	}
+	
+	@Test
+	public void getMockedObjects() {
 		
 		StepVerifier.create(integration.getProduct(PRODUCT_ID)).expectNextMatches(p -> p.getProductID().equals(PRODUCT_ID)).
 			verifyComplete();
@@ -127,48 +146,20 @@ public class ProductCompositeTest {
 		
 	}
 	
-//	@Test
-//	public void saveProduct() {
-//		
-//		ProductComposite productComposite = new ProductComposite(PRODUCT_ID, PRODUCT_NAME, 1, 
-//				Collections.singletonList(new RecommendationSummary(1, "rsaniez", 1, "Very good!")), 
-//				Collections.singletonList(new ReviewSummary(1, "rsaniez", "My opinion", "I am very happy...")));
-//		
-//		client.post().uri(basePath + "/" + Api.PRODUCT_COMPOSITE_PATH).body(just(productComposite), ProductComposite.class).
-//			accept(MediaType.APPLICATION_JSON).exchange().
-//				expectStatus().isEqualTo(HttpStatus.CREATED);
-//	}
-	
-//	@Test
-//	public void deleteProduct() {
-//		
-//		ResponseEntity<Paged<Recommendation>> recommendations = integration.getRecommendationByProductId(PRODUCT_ID, 0, 20);
-//		assertEquals(recommendations.getBody().getContent().stream().findFirst().isPresent(), true);
-//		
-//		ResponseEntity<Paged<Review>> reviews = integration.getReviewByProductId(PRODUCT_ID, 0, 20);
-//		assertEquals(reviews.getBody().getContent().stream().findFirst().isPresent(), true);
-//		
-//		client.delete().uri(basePath + "/" + Api.PRODUCT_COMPOSITE_PATH + "/" + PRODUCT_ID).exchange().
-//			expectStatus().isEqualTo(HttpStatus.OK);
-//	}
-	
-//	@Test
-//	public void productNotFound() {
-//		
-//		client.get().uri(basePath + "/" + Api.PRODUCT_COMPOSITE_PATH + "/" + PRODUCT_NOT_FOUND).
-//			accept(MediaType.APPLICATION_JSON).exchange().
-//				expectStatus().isEqualTo(HttpStatus.NOT_FOUND).
-//					expectBody().
-//						jsonPath("$.message").isEqualTo(String.format("The product %d doesn't not exist", PRODUCT_NOT_FOUND));
-//	}
-	
-//	@Test
-//	public void productInvalidInput() {
-//		
-//		client.get().uri(basePath + "/" + Api.PRODUCT_COMPOSITE_PATH + "/" + PRODUCT_INVALID_INPUT).
-//			accept(MediaType.APPLICATION_JSON).exchange().
-//				expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY).
-//				expectBody().
-//					jsonPath("$.message").isEqualTo(String.format("The product %d is an invalid input", PRODUCT_INVALID_INPUT));
-//	}
+	/**
+	 * @param productID
+	 * @param status
+	 * @return {@link BodyContentSpec}
+	 */
+	private BodyContentSpec getAndVerifyStatus(Integer productID, HttpStatus status) {
+		
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
+		params.add("pageNumber", String.valueOf(pagination.getPageNumber()));
+		params.add("pageSize", String.valueOf(pagination.getPageSize()));
+		
+		return client.get().uri(uri -> uri.pathSegment("api", "v1", Api.PRODUCT_COMPOSITE_PATH, productID.toString()).queryParams(params).build())
+				.accept(MediaType.APPLICATION_JSON).exchange().
+				expectStatus().isEqualTo(status).
+				expectBody();
+	}
 }

@@ -23,8 +23,10 @@ import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.mapper.ReviewMapper;
 import com.me.microservices.core.review.repository.ReactiveReviewRepository;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RestController
 public class ReviewServiceImpl implements ReviewService {
 	
@@ -50,6 +52,8 @@ public class ReviewServiceImpl implements ReviewService {
 		
 		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0.");
 		
+		log.info(" > Find Review by reviewID={}.", reviewID);
+		
 		return reviewRepository.findByReviewId(reviewID).
 				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
 				log().
@@ -67,6 +71,8 @@ public class ReviewServiceImpl implements ReviewService {
 		if(pageNumber == null || pageNumber < 0) pageNumber = pagination.getDefaultPageNumber();
 		if(pageSize == null || pageSize < 1) pageSize = pagination.getDefaultPageSize();
 		
+		log.info(" > Find review by productID={}, pageNumber={} and pageSize={}.", productID, pageNumber, pageSize);
+		
 		return reviewRepository.findByProductID(productID, PageRequest.of(pageNumber, pageSize, Sort.by(Direction.ASC, "reviewID"))).
 				log().
 				transform(monoOfPage -> monoOfPage.map(pageOfEntity -> toPaged(pageOfEntity)));
@@ -80,6 +86,8 @@ public class ReviewServiceImpl implements ReviewService {
 	public Mono<Review> save(Review review) {
 		
 		if(review.getReviewID() < 1) throw new InvalidInputException("ReviewID should be greater than 0.");
+		
+		log.info(" > Save the {}", review.toString());
 		
 		ReviewEntity reviewEntity = mapper.toEntity(review);
 		reviewEntity.setCreationDate(LocalDateTime.now());
@@ -126,14 +134,11 @@ public class ReviewServiceImpl implements ReviewService {
 	 */
 	@ResponseStatus(value=HttpStatus.OK)
 	@Override
-	public Mono<Void> deleteReview(Integer reviewID) {
+	public Mono<Void> deleteReviews(Integer productID) {
 	
-		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0.");
+		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0.");
 		
-		return reviewRepository.findByReviewId(reviewID).
-				switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
-				log().
-				flatMap(reviewRepository::deleteEntity).flatMap(b -> Mono.<Void>empty());
+		return reviewRepository.deleteEntityByProductID(productID).flatMap(b -> Mono.<Void>empty());
 	}
 
 	/**

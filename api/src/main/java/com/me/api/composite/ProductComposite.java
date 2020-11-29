@@ -1,4 +1,4 @@
-package com.me.api.core.composite;
+package com.me.api.composite;
 
 import java.util.Collection;
 import java.util.Collections;

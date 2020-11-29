@@ -62,7 +62,7 @@ public class ReactiveReviewRepositorySaveTest {
 	@Test
 	public void find() {
 		
-		asciiArt.display("SAVE  OTHER  REVIEW_ENTITY  AND  LAUNCH  SOMES  FIND  METHODS");
+		asciiArt.display("SAVE OTHER REVIEW_ENTITY AND LAUNCH SOMES FIND METHODS");
 		
 		Random random =  new Random();
 		

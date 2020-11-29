@@ -2,11 +2,22 @@
 logging:
   level:
     root: INFO
-    com.me.microservices.core.composite: DEBUG
-    com.me.handler.http: DEBUG
+    '[com.me.microservices.core.composite]': DEBUG
+    '[com.me.handler.http]': DEBUG
     
 ---
 spring.profiles: dev
+
+spring:
+  cloud:
+    stream:
+      default-binder: rabbit
+      
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: michael
+    password: jordan
 
 app:
   product-service:

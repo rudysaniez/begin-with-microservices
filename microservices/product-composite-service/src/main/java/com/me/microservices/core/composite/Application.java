@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import com.me.microservices.core.composite.mapper.RecommendationMapper;
 import com.me.microservices.core.composite.mapper.RecommendationMapperImpl;
 import com.me.microservices.core.composite.mapper.ReviewMapper;
 import com.me.microservices.core.composite.mapper.ReviewMapperImpl;
+import com.me.microservices.core.composite.producer.MessageProcessor;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +29,7 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+@EnableBinding(value = MessageProcessor.class)
 @EnableConfigurationProperties(value=Application.PaginationInformation.class)
 @ComponentScan(basePackages= {"com.me.microservices.core", "com.me.handler.http"})
 @SpringBootApplication

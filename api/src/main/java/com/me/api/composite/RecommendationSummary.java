@@ -1,28 +1,28 @@
-package com.me.api.core.composite;
+package com.me.api.composite;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
 
 @Data @AllArgsConstructor
-public class ReviewSummary {
+public class RecommendationSummary {
 
-	private Integer reviewID;
+	private Integer recommendationID;
 	
-	@Exclude
+	@Exclude 
 	private String author;
 	
-	@Exclude
-	private String subject;
+	@Exclude 
+	private Integer rate;
 	
 	@Exclude
 	private String content;
 	
-	public ReviewSummary() {
+	public RecommendationSummary() {
 		
-		this.reviewID = 0;
+		this.recommendationID = 0;
 		this.author = null;
-		this.subject = null;
+		this.rate = 0;
 		this.content = null;
 	}
 }

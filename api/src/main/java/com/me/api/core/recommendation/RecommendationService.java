@@ -50,8 +50,8 @@ public interface RecommendationService {
 	public Mono<Recommendation> update(@RequestBody Recommendation recommendation, @PathVariable(name="recommendationID", required=true) Integer recommendationID);
 	
 	/**
-	 * @param recommendationID
+	 * @param productID
 	 */
-	@DeleteMapping(value=Api.RECOMMENDATION_PATH + "/{recommendationID}")
-	public Mono<Void> deleteRecommendation(@PathVariable(name="recommendationID", required=true) Integer recommendationID);
+	@DeleteMapping(value=Api.RECOMMENDATION_PATH + "/{productID}")
+	public Mono<Void> deleteRecommendations(@PathVariable(name="productID", required=true) Integer productID);
 }
