@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,6 @@ import com.me.handler.exception.NotFoundException;
 import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.repository.ReviewRepository;
 
-@Ignore
 @Transactional
 @RunWith(SpringRunner.class)
 @AutoConfigureTestDatabase(connection=EmbeddedDatabaseConnection.HSQL)
@@ -60,7 +58,7 @@ public class ReviewEntityTest {
 	}
 	
 	@Test
-	public void creation() {
+	public void createReview() {
 		
 		ReviewEntity entity = new ReviewEntity(1, 1, AUTHOR, SUBJECT, CONTENT);
 		entity = reviewRepository.save(entity);
@@ -72,7 +70,7 @@ public class ReviewEntityTest {
 	}
 	
 	@Test
-	public void update() {
+	public void updateReview() {
 		
 		ReviewEntity entity = reviewRepository.findByReviewID(REVIEW_ID).get();
 		assertEqualsReview(savedReview, entity);
@@ -83,14 +81,14 @@ public class ReviewEntityTest {
 	}
 	
 	@Test
-	public void delete() {
+	public void deleteReview() {
 		
 		reviewRepository.delete(savedReview);
 		reviewRepository.findByReviewID(REVIEW_ID);
 	}
 	
 	@Test(expected=DataIntegrityViolationException.class)
-	public void duplicateError() {
+	public void createReviewDataIntegrityViolationException() {
 		
 		ReviewEntity entity = new ReviewEntity(REVIEW_ID, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT);
 		reviewRepository.save(entity);
@@ -111,6 +109,11 @@ public class ReviewEntityTest {
 		assertEqualsDate(savedReview.getCreationDate(), entity.getCreationDate());
 	}
 	
+	
+	/**
+	 * @param expectedReview
+	 * @param actualReview
+	 */
 	public void assertEqualsReview(ReviewEntity expectedReview, ReviewEntity actualReview) {
 		
 		assertEquals(expectedReview.getContent(), actualReview.getContent());
@@ -120,6 +123,10 @@ public class ReviewEntityTest {
 		assertEquals(expectedReview.getSubject(), actualReview.getSubject());
 	}
 	
+	/**
+	 * @param expected
+	 * @param actual
+	 */
 	public void assertEqualsDate(LocalDateTime expected, LocalDateTime actual) {
 		assertEquals(FORMATTER.format(expected), FORMATTER.format(actual));
 	}
