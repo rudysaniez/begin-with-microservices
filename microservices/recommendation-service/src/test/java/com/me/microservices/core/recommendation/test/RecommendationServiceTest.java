@@ -296,7 +296,7 @@ public class RecommendationServiceTest {
 	 */
 	public void sendDeleteRecommendationEvent(Integer recommendationId) {
 		
-		Event<Integer, Recommendation> event = new Event<>(recommendationId, null, Event.Type.DELETE);
+		Event<Integer> event = new Event<>(recommendationId, Event.Type.DELETE);
 		log.info(" > One message will be sent for a recommendation deletion ({}).", event.toString());
 		channel.input().send(MessageBuilder.withPayload(event).build());
 	}

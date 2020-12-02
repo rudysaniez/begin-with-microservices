@@ -181,7 +181,7 @@ public class ProductCompositeIntegration implements ProductService, ProductAsync
 	@Override
 	public void deleteReviewsAsync(Integer productID) {
 		
-		Event<Integer, Review> event = new Event<Integer, Review>(productID, Event.Type.DELETE);
+		Event<Integer> event = new Event<>(productID, Event.Type.DELETE);
 		log.info(" > A review delete event will be sent : {}", event);
 		messageProcessor.outputReviews().send(MessageBuilder.withPayload(event).build());
 	}
@@ -264,7 +264,7 @@ public class ProductCompositeIntegration implements ProductService, ProductAsync
 	@Override
 	public void deleteRecommendationsAsync(Integer productID) {
 		
-		Event<Integer, Recommendation> event = new Event<>(productID, Event.Type.DELETE);
+		Event<Integer> event = new Event<>(productID, Event.Type.DELETE);
 		log.info(" > A recommendation delete event will be sent : {}", event);
 		messageProcessor.outputRecommendations().send(MessageBuilder.withPayload(event).build());
 	}
@@ -347,7 +347,7 @@ public class ProductCompositeIntegration implements ProductService, ProductAsync
 	@Override
 	public void deleteProductAsync(Integer productID) {
 		
-		Event<Integer, Product> event = new Event<>(productID, Event.Type.DELETE);
+		Event<Integer> event = new Event<>(productID, Event.Type.DELETE);
 		log.info(" > A product delete event will be sent : {}", event);
 		messageProcessor.outputProducts().send(MessageBuilder.withPayload(event).build());
 	}
