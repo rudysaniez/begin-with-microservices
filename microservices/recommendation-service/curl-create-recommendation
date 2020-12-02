@@ -4,8 +4,8 @@ set -e
 
 cd $(dirname $0)
 
-curl -X POST -H 'Content-Type: application/json'  -d '{ "recommendationID": 1, "productID": 1, "author": "rudysaniez", "rate": 1, "content": "Good product!" }' http://localhost:8082/api/v1/recommendations -s | jq
+curl -X POST -H 'Content-Type: application/json'  -d '{ "recommendationID": 50, "productID": 50, "author": "rudysaniez", "rate": 1, "content": "Good product!" }' http://localhost:8082/api/v1/recommendations -s | jq
 
-curl -X POST -H 'Content-Type: application/json'  -d '{ "recommendationID": 2, "productID": 1, "author": "nathansaniez", "rate": 1, "content": "Bad product! don t buy that!" }' http://localhost:8082/api/v1/recommendations -s | jq
+curl -X POST -H 'Content-Type: application/json'  -d '{ "recommendationID": 51, "productID": 50, "author": "nathansaniez", "rate": 1, "content": "Bad product! don t buy that!" }' http://localhost:8082/api/v1/recommendations -s | jq
 
-curl -X POST -H 'Content-Type: application/json'  -d '{ "recommendationID": 3, "productID": 1, "author": "stephanesaniez", "rate": 1, "content": "Yes good job !" }' http://localhost:8082/api/v1/recommendations -s | jq
+curl -X POST -H 'Content-Type: application/json'  -d '{ "recommendationID": 52, "productID": 50, "author": "stephanesaniez", "rate": 1, "content": "Yes good job !" }' http://localhost:8082/api/v1/recommendations -s | jq

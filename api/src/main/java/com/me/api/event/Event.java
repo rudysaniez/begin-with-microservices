@@ -7,10 +7,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Getter @Setter @ToString
-public class Event<K,D> {
+public class Event<K extends Number> {
 
 	private K key;
-	private D data;
 	private LocalDateTime creationDate;
 	private Event.Type type;
 	
@@ -19,7 +18,6 @@ public class Event<K,D> {
 	public Event() {
 		
 		this.key = null;
-		this.data = null;
 		this.type = Event.Type.DELETE;
 		this.creationDate = LocalDateTime.now();
 	}
@@ -31,20 +29,6 @@ public class Event<K,D> {
 	public Event(K key, Event.Type type) {
 		
 		this.key = key;
-		this.data = null;
-		this.type = type;
-		this.creationDate = LocalDateTime.now();
-	}
-	
-	/**
-	 * @param key
-	 * @param data
-	 * @param type
-	 */
-	public Event(K key, D data, Event.Type type) {
-		
-		this.key = key;
-		this.data = data;
 		this.type = type;
 		this.creationDate = LocalDateTime.now();
 	}

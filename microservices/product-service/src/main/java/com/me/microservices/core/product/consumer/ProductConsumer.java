@@ -8,7 +8,6 @@ import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
-import com.me.api.core.product.Product;
 import com.me.api.core.product.ProductService;
 import com.me.api.event.Event;
 import com.me.handler.exception.NotFoundException;
@@ -30,7 +29,7 @@ public class ProductConsumer {
 	 * @param event
 	 */
 	@StreamListener(value = Sink.INPUT)
-	public void consume(@Payload(required = false) Event<Integer, Product> event) {
+	public void consume(@Payload(required = false) Event<Integer> event) {
 
 		if(event == null)
 			return;

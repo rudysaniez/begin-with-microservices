@@ -29,7 +29,7 @@ public class RecommendationConsumer {
 	 * @param event
 	 */
 	@StreamListener(value = Sink.INPUT)
-	public void consumer(@Payload(required = false) Event<Integer, Recommendation> event) {
+	public void consumer(@Payload(required = false) Event<Integer> event) {
 		
 		if(event == null)
 			return;

@@ -8,7 +8,6 @@ import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
-import com.me.api.core.review.Review;
 import com.me.api.core.review.ReviewService;
 import com.me.api.event.Event;
 
@@ -29,7 +28,7 @@ public class ReviewConsumer {
 	 * @param event
 	 */
 	@StreamListener(value = Sink.INPUT)
-	public void consume(@Payload(required = false) Event<Integer, Review> event) {
+	public void consume(@Payload(required = false) Event<Integer> event) {
 		
 		if(event == null)
 			return;

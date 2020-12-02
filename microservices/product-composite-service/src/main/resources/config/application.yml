@@ -32,7 +32,7 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     generator:
-      write-numbers-as-strings: true
+      write-numbers-as-strings: false
     default-property-inclusion: NON_NULL #permits to not return fields with null value.
     date-format: yyyy-MM-dd'T'HH:mm:ssZ
     

@@ -309,7 +309,7 @@ public class ProductServiceTest {
 	 */
 	public void sendDeleteProductEvent(Integer productId) {
 		
-		Event<Integer, Product> event = new Event<Integer, Product>(productId, null, Event.Type.DELETE);
+		Event<Integer> event = new Event<>(productId, Event.Type.DELETE);
 		log.info(" > One message will be sent for a product deletion ({}).", event.toString());
 		channel.input().send(MessageBuilder.withPayload(event).build());
 	}
