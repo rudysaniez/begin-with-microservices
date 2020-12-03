@@ -11,6 +11,9 @@ management:
       exposure:
         include: info,health,env,metrics
       base-path: /management
+  endpoint:
+    health:
+      show-details: always
 
 spring:
   jackson:
@@ -38,6 +41,10 @@ spring:
             back-off-initial-interval: 500
             back-off-max-interval: 1000
             back-off-multiplier: 2.0
+
+  datasource:
+    hikari:
+      initialization-fail-timeout: 60000
 
   jpa:
     hibernate:

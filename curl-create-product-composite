@@ -6,6 +6,14 @@ cd $(dirname $0)
 
 curl -X POST -H 'Content-Type: application/json'  -d '{ "productID": 50, "name": "FER A SOUDER", "weight": 0, "recommendations": [ { "recommendationID": 50, "author": "rudysaniez", "rate": 1, "content": "Good product!" } ], "reviews": [ { "reviewID": 50, "author": "rudysaniez", "subject": "Nice", "content": "Beautiful! it works" } ] }' http://localhost:9080/api/v1/products-composite -s | jq
 
+sleep 1
+
 curl -X POST -H 'Content-Type: application/json'  -d '{ "productID": 51, "name": "TOURNEVIS ELECTRIQUE", "weight": 0, "recommendations": [ { "recommendationID": 51, "author": "rudysaniez", "rate": 1, "content": "Good product!" }, { "recommendationID": 52, "author": "nathansaniez", "rate": 1, "content": "Not bad!" } ], "reviews": [ { "reviewID": 51, "author": "rudysaniez", "subject": "Nice", "content": "Beautiful! it works" }, { "reviewID": 52, "author": "stephanesaniez", "subject": "Nice", "content": "Beautiful! it works" }, { "reviewID": 53, "author": "nathansaniez", "subject": "Not bad!", "content": "My opinion : Not bad!" } ] }' http://localhost:9080/api/v1/products-composite -s | jq
 
+sleep 1
+
 curl -X POST -H 'Content-Type: application/json'  -d '{ "productID": 52, "name": "TOURNEVIS MULTI FONCTION", "weight": 0, "recommendations": [ { "recommendationID": 53, "author": "rudysaniez", "rate": 1, "content": "Good product!" }, { "recommendationID": 54, "author": "nathansaniez", "rate": 1, "content": "Not bad!" } ], "reviews": [ { "reviewID": 54, "author": "rudysaniez", "subject": "Nice", "content": "Beautiful! it works" }, { "reviewID": 55, "author": "stephanesaniez", "subject": "Nice", "content": "Beautiful! it works" }, { "reviewID": 56, "author": "nathansaniez", "subject": "Not bad!", "content": "My opinion : Not bad!" } ] }' http://localhost:9080/api/v1/products-composite -s | jq
+
+sleep 1
+
+curl -X POST -H 'Content-Type: application/json'  -d '{ "productID": 53, "name": "SCIE ELECTRIQUE", "weight": 2, "recommendations": [ { "recommendationID": 55, "author": "rudysaniez", "rate": 1, "content": "Yes very happy !" }, { "recommendationID": 56, "author": "nathansaniez", "rate": 1, "content": "Good product!" } ], "reviews": [ { "reviewID": 58, "author": "rudysaniez", "subject": "Very Well", "content": "This product works very well" }, { "reviewID": 59, "author": "stephanesaniez", "subject": "Nice", "content": "Beautiful! it works" }, { "reviewID": 60, "author": "nathansaniez", "subject": "Not bad!", "content": "My opinion : Not bad!" } ] }' http://localhost:9080/api/v1/products-composite -s | jq
