@@ -10,7 +10,10 @@ management:
     web:
       exposure:
         include: info,health,env,metrics
-      base-path: /management 
+      base-path: /management
+  endpoint:
+    health:
+      show-details: always 
 
 spring:
   jackson:
