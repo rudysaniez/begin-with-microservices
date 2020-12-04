@@ -12,7 +12,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_PARTITIONED=true
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCECOUNT=2
@@ -27,7 +27,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_PARTITIONED=true
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCECOUNT=2
@@ -42,7 +42,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_PARTITIONED=true
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCECOUNT=2
@@ -57,7 +57,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_PARTITIONED=true
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCECOUNT=2
@@ -72,7 +72,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_PARTITIONED=true
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCECOUNT=2
@@ -87,7 +87,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_PARTITIONED=true
       - SPRING_CLOUD_STREAM_BINDINGS_INPUT_CONSUMER_INSTANCECOUNT=2
@@ -103,7 +103,7 @@ services:
       - recommendation
       - review
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,product-composite-swagger
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit,product-composite-swagger
       - JAVA_OPTS=-Xms256M -Xmx256M
       - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT-PRODUCTS_PRODUCER_PARTITION-KEY-EXPRESSION=payload.key
       - SPRING_CLOUD_STREAM_BINDINGS_OUTPUT-PRODUCTS_PRODUCER_PARTITION-COUNT=2

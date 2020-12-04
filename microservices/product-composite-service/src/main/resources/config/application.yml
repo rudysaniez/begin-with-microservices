@@ -65,7 +65,7 @@ api.pagination:
   page-size: 5
     
 ---
-spring.profiles: docker
+spring.profiles: docker-api
 
 server.port: 9080
 
@@ -73,17 +73,6 @@ logging:
   level:
     '[com.me.work.example.microservices.core.composite]': DEBUG
     '[com.me.work.example.handler.http]': DEBUG
-    
-spring:
-  cloud:
-    stream:
-      default-binder: rabbit
-      
-  rabbitmq:
-    host: rabbitmq
-    port: 5672
-    username: michael
-    password: jordan    
     
 app:
   product-service:
@@ -97,6 +86,34 @@ app:
   review-service:
     host: review
     port: 8083
+
+---
+spring.profiles: docker-rabbit
+
+spring:
+  cloud:
+    stream:
+      default-binder: rabbit
+      
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: michael
+    password: jordan
+
+---
+spring.profiles: docker-kafka
+
+spring:
+  cloud:
+    stream:
+      default-binder: kafka
+    
+      kafka:
+        binder:
+          brokers: kafka:9092
+          replication-factor: 1
+          auto-create-topics: true
 
 ---
 spring.profiles: product-composite-swagger

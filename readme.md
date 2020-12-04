@@ -1,37 +1,53 @@
-# Developping non-blocking synchronous REST APIs using Spring
+Developping non-blocking synchronous REST APIs & Asynchronous Event-Driven With Spring-Boot and Spring-Cloud
+================================
 
-## Presentation
+Presentation
+------------
 
 4 microservices are implemented :
 
-1. products-service (products layer)
-2. recommendations-service (recommendations layer)
-3. reviews-service (reviews layer)
-4. products-composite-service (integration and aggregation layer)
+1. product-service (non-blocking products layer)
+2. recommendation-service (non-blocking recommendations layer)
+3. review-service (non-blocking reviews layer)
+4. product-composite-service (integration and aggregation layer)
 
-## Architecture
+Architecture
+------------
 
-- Microservice core : **Products** with MongoDB
-- Microservice core : **Recommendations** with MongoDB
-- Microservice core : **Reviews** with MySQL
-- Microservice for the aggregation layer and the integration layer : **products-composite**
+- Microservice core *product-service* : Use **MongoDB** and consume the products topic
+- Microservice core *recommendation-service* : Use **MongoDB** and consume the recommendations topic
+- Microservice core *review-service* : Use **MySQL** and consume the reviews topic
+- Microservice *product-composite-service* : Aggregation layer and integration layer. Event producer to *products* topic, to *recommendations* topic and to *reviews* topic.
 
-## Spring Reactor
+By default, it's RabbitMQ is used and without partitions.
+In this implementation, when a deletion is called, this action is perform in asynchronous. Three events are produces by
+the microservice *product-composite-service* :
+
+- One event of DELETE type is sent to products topic
+- One event of DELETE type is sent to recommendations topic
+- One event of DELETE type is sent to reviews topic
+
+Spring Reactor
+--------------
 
 Spring 5 integrate the Project Reactor. The Project Reactor is based on *Reactive Streams specification*. The programming model is based on processing streams of data. The data types are **Mono** and **Flux**. A **Flux** is used for process a stream of *0..n* elements and a **Mono** is used for process a stream of *0..1* element.
 
 Project Reactor is implemented in Spring 5, and for this it is necessary to use **Spring WebFlux**, **Spring WebClient** and **Spring Data** with Reactive database driver like following **mongodb-driver-reactivestreams**.
 
-## Non-blocking persistence using Spring-Data for MongoDB
+Non-blocking persistence using Spring-Data for MongoDB
+------------------------
 
-The reactive microservices **products** and **recommendations** use Spring-Data with the *ReactiveMongoRepository* features.
+The non-blocking microservices **product-service** and **recommendation-service** use Spring-Data with the *ReactiveMongoRepository* features.
 The CRUD methods return a **Mono** or **Flux** object.
+
+For example :
 
 	public Mono<Product> findByProductID(Integer productID);
 	
 	public Flux<Product> findByNameStartingWith(String name, Pageable page);
 
-## Dealing with blocking code
+Dealing with blocking code
+--------------------------
 
 The **Review** persistence layer use Spring-Data JPA to access its data in a relational database. In this case, we don't have support for a non-blocking programming model. We can run the blocking code using Scheduler.
 
@@ -50,9 +66,10 @@ The **Review** persistence layer use Spring-Data JPA to access its data in a rel
 		  subscribeOn(scheduler);
 	}
 	  
-Note : We will integrate R2DBC in a future version.
+**Note : We will integrate R2DBC in a future version.**
 
-## Non-blocking REST APIs in the core services and composite services
+Non-blocking REST APIs in the core services and composite services
+------------------------------------------------------------------
 
 The APIs return reactive data types : **Mono** and **Flux**. 
 Services implementation don't contain any blocking code.
@@ -64,41 +81,69 @@ different operations return a data type **Mono** or **Flux**.
 The services implementation use a reactive persistence layer, and the composite services use **Spring WebClient** to
 query the different microservices core.
 
-## MongoDB and MySQL CLI
-
-You can use MongoDB and MySQL CLI with **docker-compose exec**.
-
-**Example :**
-
-	docker-compose exec mongodb mongo productsdb --quiet --eval "db.products.find()"
-	docker-compose exec mongodb mongo recommendationsdb --quiet --eval "db.recommendations.find()"
-	docker-compose exec reviews-db mysql -umichael -p -e "select * from reviewsdb.REVIEW"
-
-## Git
+Git
+---
 
 	git clone git@github.com:rudysaniez/begin-with-microservices.git
 
-## Maven
+Maven
+-----
 
 	mvn clean package
-	
-## Starting up the microservices landscape
 
-	docker-compose up --build --detach
-	
-	or
-	
-	./test-em-all.bash start
-	
-When you launch the bash named **test-em-all.bash**, several tests are launched such as product creation, recommendation and review. The container docker is always active and you can use the **products-composite** microservices.
+Starting up the microservices landscape
+---------------------------------------
 
-Note : The **jq** util is required for launch this bash file.
+Using RabbitMQ without using partitions :
+
+	docker-compose build && docker-compose up --detach
+	
+Using RabbitMQ with two partitions per topic :
+
+	export COMPOSE_FILE=docker-compose-partitions.yml
+	docker-compose build && docker-compose up --detach
+	
+Using Kafka with one partition per topic :
+
+	export COMPOSE_FILE=docker-compose-kafka.yml
+	docker-compose build && docker-compose up --detach
 	
 Display the logs, you can launch :
 	
 	docker-compose logs -f
 	
-## Products-composite creation
+	or
+	
+	docker-compose logs -f product-composite
+	
+	or
+	
+	docker-compose logs -f product
+	
+	or
+	
+	docker-compose logs -f recommendation
+	
+	or
+	
+	docker-compose logs -f review
+	
+	or
+	
+	docker-compose logs -f kafka
+	
+	or
+	
+	docker-compose logs -f mongodb
+	
+	or
+	
+	docker-compose logs -f reviews-db
+	
+you can select which logs you want to view like this.
+
+Products-composite creation
+---------------------------
 
 	./curl-create-product-composite
 	
@@ -206,7 +251,8 @@ you get this :
 	  ]
 	}
 
-## Get products-composite
+Get products-composite
+----------------------
 
 	./curl-get-product-composite 50
 	
@@ -250,38 +296,182 @@ you get this :
 	  }
 	}
 
-## Delete products-composite
+Delete products-composite
+-------------------------
 
 	./curl-delete-product-composite 50
 	
-you get this :
+The deletion is done asynchronously.
 
-	{
-	  "timestamp": "2020-11-22T20:37:19.396714Z",
-	  "path": "/products-composite/50",
-	  "httpStatus": "SERVICE_UNAVAILABLE",
-	  "message": "An event will be sent (Asynchronous event-driven)."
-	}
+You can see in logs for the **product** service when you launch :
 
-## Use MongoDB and MySQL CLI TOOLS.
+	> Receive an event of type DELETE, created at 2020-12-04T13:12:22.355057
+	
+	> The product with id=50 has been deleted at 2020-12-04T13:12:22.355157
+
+You can see in logs for the **recommendation** service when you launch :
+
+	> Receive an event of type DELETE, created at 2020-12-04T13:12:22.358124
+	
+	> The recommendation(s) with productID=50 has been deleted at 2020-12-04T13:12:22.358127
+	
+You can see in logs for the **review** service when you launch :
+
+	> Receive an event of type DELETE, created at 2020-12-04T13:12:22.359634
+	
+	> The review(s) with productID=50 has been deleted at 2020-12-04T13:12:22.359638
+	
+You can see in logs for the **product-composite** service when you launch :
+
+	> A product delete event will be sent : Event(key=50, creationDate=2020-12-04T13:12:22.355057, type=DELETE)
+	
+	> A recommendation delete event will be sent : Event(key=50, creationDate=2020-12-04T13:12:22.358124, type=DELETE)
+	
+	> A review delete event will be sent : Event(key=50, creationDate=2020-12-04T13:12:22.359634, type=DELETE)
+
+Use MongoDB and MySQL CLI TOOLS
+-------------------------------
 	
 Gets products documents :
 	
 	docker-compose exec mongodb mongo productsdb --quiet --eval "db.products.find()"
 	
+- **mongodb** is the service name
+- **mongo** is the command
+- **productsdb** is the database name
+- **db.products** is the collection name
+	
 Gets recommendations documents :
 
 	docker-compose exec mongodb mongo recommendationsdb --quiet --eval "db.recommendations.find()"
 	
+- **mongodb** is the service name
+- **mongo** is the command
+- **recommendationsdb** is the database name
+- **db.recommendations** is the collection name
+	
 Gets reviews in MySQL database (password is **jordan**) :
 
 	docker-compose exec reviews-db mysql -umichael -p -e "select * from reviewsdb.REVIEW"
+	
+- **reviews-db** is the service name
+- **mysql** is the command
+- **-umichael** is the user named Michael
+- **-p** is the password, here is **jordan**
+- __-e "select * from reviewsdb.REVIEW__ is the SQL request to execute
 
-## Stopping up the microservices
+RabbitMQ manager tools
+----------------------
+
+Open the following URL in web :
+
+	http://localhost:15672/#/queues
+	
+You should see all queues :
+
+- products.auditGroup
+- products.productsGroup
+- products.productsGroup.dlq
+
+- recommendations.auditGroup
+- recommendations.recommendationsGroup
+- recommendations.recommendationsGroup.dlq
+
+- reviews.auditGroup
+- reviews.reviewsGroup
+- reviews.reviewsGroup.dlq
+
+If you use RabbitMQ with two partitions, you should see :
+
+- products.auditGroup-0
+- products.auditGroup-1
+- products.productsGroup-0
+- products.productsGroup-1
+- products.productsGroup.dlq
+
+- recommendations.auditGroup-0
+- recommendations.auditGroup-1
+- recommendations.recommendationsGroup-0
+- recommendations.recommendationsGroup-1
+- recommendations.recommendationsGroup.dlq
+
+- reviews.auditGroup-0
+- reviews.auditGroup-1
+- reviews.reviewsGroup-0
+- reviews.reviewsGroup-1
+- reviews.reviewsGroup.dlq
+
+Kafka manager tools
+-------------------
+
+To see a list of topics, run the following command :
+
+	docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --zookeeper zookeeper --list
+	
+**Products topic :**
+
+	docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --describe --zookeeper zookeeper --topic products
+	
+- **kafka** is the service name
+- **/opt/kafka/bin/kafka-topics.sh** is the shell to execute
+- **--topic products** is the topic to describe	
+	
+**Recommendations topic :**
+
+	docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --describe --zookeeper zookeeper --topic recommendations
+	
+- **kafka** is the service name
+- **/opt/kafka/bin/kafka-topics.sh** is the shell to execute
+- **--topic recommendations** is the topic to describe		
+	
+**Reviews topic :**
+
+	docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --describe --zookeeper zookeeper --topic reviews
+	
+- **kafka** is the service name
+- **/opt/kafka/bin/kafka-topics.sh** is the shell to execute
+- **--topic reviews** is the topic to describe
+
+Kafka, see all the messages in a specific topic
+-----------------------------------------------
+
+**Products topic :**
+	
+	docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic products --from-beginning --timeout-ms 1000 --partition 0
+
+- **kafka** is the service name
+- **/opt/kafka/bin/kafka-console-consumer.sh** is the shell to execute
+- **--bootstrap-server localhost:9092** is the kafka broker
+- **--topic products** is the topic name
+- **--partition** is the partition number
+
+**Recommendations topic :**
+
+	docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic recommendations --from-beginning --timeout-ms 1000 --partition 0
+
+- **kafka** is the service name
+- **/opt/kafka/bin/kafka-console-consumer.sh** is the shell to execute
+- **--bootstrap-server localhost:9092** is the kafka broker
+- **--topic recommendations** is the topic name
+- **--partition** is the partition number
+
+**Reviews topic :**
+
+	docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic reviews --from-beginning --timeout-ms 1000 --partition 0
+
+- **kafka** is the service name
+- **/opt/kafka/bin/kafka-console-consumer.sh** is the shell to execute
+- **--bootstrap-server localhost:9092** is the kafka broker
+- **--topic reviews** is the topic name
+- **--partition** is the partition number
+
+Stopping up the microservices
+-----------------------------
 
 	docker-compose down
 	
-## Test products-composite services
+Test products-composite services
+--------------------------------
 
 The **jq** util is required for launch this bash file.
 
