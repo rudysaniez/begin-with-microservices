@@ -14,7 +14,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       
   recommendation:
@@ -28,7 +28,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       
   review:
@@ -42,7 +42,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit
       - JAVA_OPTS=-Xms256M -Xmx256M
       
   product-composite:
@@ -55,7 +55,7 @@ services:
       - recommendation
       - review
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,product-composite-swagger
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit,product-composite-swagger
       - JAVA_OPTS=-Xms256M -Xmx256M
       
   mongodb:

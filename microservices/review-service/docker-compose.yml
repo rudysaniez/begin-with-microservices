@@ -5,7 +5,7 @@ services:
 
   review:
     build: .
-    mem_limit: 600M
+    mem_limit: 350M
     ports:
       - 8083:8083
     depends_on: 
@@ -14,8 +14,8 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,review-swagger
-      - JAVA_OPTS=-Xms512M -Xmx512M
+      - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit,review-swagger
+      - JAVA_OPTS=-Xms256M -Xmx256M
   
   reviews-db:
     image: mysql:latest

@@ -1,6 +1,8 @@
-# Java in Docker
+Java in Docker
+==============
 
-## CPU
+CPU
+---
 
 	echo "Runtime.getRuntime().availableProcessors()" | docker run --rm -i openjdk:12.0.2 jshell -q
 	
@@ -34,7 +36,8 @@ The JVM will respond *$1 ==> 2*.
 	
 
 	
-## Memory
+Memory
+------
 
 	docker run --rm -it openjdk:12.0.2 java -XX:+PrintFlagsFinal -version | grep MaxHeapSize
 	
@@ -63,7 +66,3 @@ Result :
 	size_t MaxHeapSize                              = 536870912                                 {product} {command line}
 	
 The JVM will respond *536,870,912 bytes* which equals 512 MB, as expected.
-
-
-
-
