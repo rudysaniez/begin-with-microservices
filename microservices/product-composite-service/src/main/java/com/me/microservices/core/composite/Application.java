@@ -1,7 +1,15 @@
 package com.me.microservices.core.composite;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.health.CompositeReactiveHealthContributor;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.ReactiveHealthContributor;
+import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -11,6 +19,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import com.me.api.core.health.HealthService;
 import com.me.microservices.core.composite.mapper.PagedMapper;
 import com.me.microservices.core.composite.mapper.PagedMapperImpl;
 import com.me.microservices.core.composite.mapper.RecommendationMapper;
@@ -21,6 +30,7 @@ import com.me.microservices.core.composite.producer.MessageProcessor;
 
 import lombok.Getter;
 import lombok.Setter;
+import reactor.core.publisher.Mono;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -60,6 +70,41 @@ public class Application {
 		
 		private int pageNumber;
 		private int pageSize;
+	}
+	
+	@Autowired
+	private HealthService healthService;
+	
+	@Bean
+	public CompositeReactiveHealthContributor coreMicroservices() {
+		
+		ReactiveHealthContributor productContributor = new ReactiveHealthIndicator() {
+			@Override
+			public Mono<Health> health() {
+				return healthService.getProductHealth();
+			}
+		};
+		
+		ReactiveHealthContributor recommendationContributor = new ReactiveHealthIndicator() {
+			@Override
+			public Mono<Health> health() {
+				return healthService.getRecommendationHealth();
+			}
+		};
+		
+		ReactiveHealthContributor reviewContributor = new ReactiveHealthIndicator() {
+			@Override
+			public Mono<Health> health() {
+				return healthService.getReviewHealth();
+			}
+		};
+		
+		Map<String, ReactiveHealthContributor> contributors = new HashMap<>();
+		contributors.put("product", productContributor);
+		contributors.put("recommendation", recommendationContributor);
+		contributors.put("review", reviewContributor);
+		
+		return CompositeReactiveHealthContributor.fromMap(contributors);
 	}
 	
 	/**

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.support.MessageBuilder;
@@ -15,8 +16,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.me.api.Actuator;
 import com.me.api.Api;
 import com.me.api.core.common.Paged;
+import com.me.api.core.health.HealthService;
 import com.me.api.core.product.Product;
 import com.me.api.core.product.ProductService;
 import com.me.api.core.product.async.ProductAsyncService;
@@ -42,7 +45,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class ProductCompositeIntegration implements ProductService, ProductAsyncService, 
 													RecommendationService, RecommendationAsyncService, 
-													ReviewService, ReviewAsyncService {
+													ReviewService, ReviewAsyncService, HealthService {
 
 	private final ObjectMapper jack;
 	private final WebClient productClient;
@@ -350,6 +353,39 @@ public class ProductCompositeIntegration implements ProductService, ProductAsync
 		Event<Integer> event = new Event<>(productID, Event.Type.DELETE);
 		log.info(" > A product delete event will be sent : {}", event);
 		messageProcessor.outputProducts().send(MessageBuilder.withPayload(event).build());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Mono<Health> getProductHealth() {
+		
+		return productClient.get().uri(uri -> uri.pathSegment(Actuator.BASE_PATH, Actuator.HEALTH_PATH).build()).
+				retrieve().bodyToMono(String.class).map(s -> new Health.Builder().up().build()).
+				onErrorResume(e -> Mono.just(new Health.Builder().down().build())).log();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Mono<Health> getRecommendationHealth() {
+		
+		return recommendationClient.get().uri(uri -> uri.pathSegment(Actuator.BASE_PATH, Actuator.HEALTH_PATH).build()).
+				retrieve().bodyToMono(String.class).map(s -> new Health.Builder().up().build()).
+				onErrorResume(e -> Mono.just(new Health.Builder().down().build()));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Mono<Health> getReviewHealth() {
+		
+		return reviewClient.get().uri(uri -> uri.pathSegment(Actuator.BASE_PATH, Actuator.HEALTH_PATH).build()).
+				retrieve().bodyToMono(String.class).map(s -> new Health.Builder().up().build()).
+				onErrorResume(e -> Mono.just(new Health.Builder().down().build()));
 	}
 
 	/**
