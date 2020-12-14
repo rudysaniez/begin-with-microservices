@@ -1,11 +1,8 @@
 package com.me.microservices.core.review.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.stream.IntStream;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.system.OutputCaptureRule;
 import org.springframework.cloud.stream.messaging.Sink;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.support.MessageBuilder;
@@ -30,8 +26,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
-import com.me.api.core.review.Review;
 import com.me.api.event.Event;
+import com.me.microservices.core.review.api.model.Review;
 import com.me.microservices.core.review.repository.ReactiveReviewRepository;
 import com.me.microservices.core.review.repository.ReviewRepository;
 import com.me.microservices.core.review.service.AsciiArtService;
@@ -39,7 +35,6 @@ import com.me.microservices.core.review.service.AsciiArtService;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-@Ignore
 @Slf4j
 @AutoConfigureTestDatabase(connection=EmbeddedDatabaseConnection.HSQL)
 @RunWith(SpringRunner.class)
@@ -70,7 +65,19 @@ public class ReviewServiceTest {
 	public OutputCaptureRule output = new OutputCaptureRule();
 	
 	private static final Integer REVIEW_ID = 1;
+	
+	private static final Integer REVIEW_ID_PART1 = 2;
+	private static final Integer REVIEW_ID_PART2 = 16;
+	private static final Integer REVIEW_ID_PART3 = 26;
+	private static final Integer REVIEW_ID_NOT_FOUND = 999;
+	private static final Integer REVIEW_ID_INVALID_INPUT = 0;
+	
 	private static final Integer PRODUCT_ID = 1;
+	private static final Integer PRODUCT_ID_PART_1 = 1;
+	private static final Integer PRODUCT_ID_PART_2 = 2;
+	private static final Integer PRODUCT_ID_PART_3 = 3;
+	
+	
 	private static final String SUBJECT = "Washing machine";
 	private static final String CONTENT = "Good product. The installation is simply.";
 	private static final String AUTHOR = "rudysaniez";
@@ -82,23 +89,52 @@ public class ReviewServiceTest {
 		
 		reactiveReviewRepository.deleteAllEntities().block();
 		
-		Review review = new Review(REVIEW_ID, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT);
+		Review review = ReviewModelBuilder.create().withReviewID(REVIEW_ID).withProductID(PRODUCT_ID).
+			withAuthor(AUTHOR).withSubject(SUBJECT).withContent(CONTENT).build();
+		
 		createAndVerifyStatus(review, HttpStatus.CREATED);
 		
-		IntStream.rangeClosed(REVIEW_ID + 1, 21).mapToObj(i -> new Review(i, PRODUCT_ID, AUTHOR + "_" + i, SUBJECT + "_" + i, CONTENT)).
+		IntStream.rangeClosed(REVIEW_ID_PART1, 15).
+			mapToObj(i ->  ReviewModelBuilder.create().withReviewID(i).withProductID(PRODUCT_ID_PART_1).withAuthor(AUTHOR + "_" + i).withSubject(SUBJECT + "_" + i).withContent(CONTENT).build()).
+			forEach(entity -> createAndVerifyStatus(entity, HttpStatus.CREATED));
+		
+		IntStream.rangeClosed(REVIEW_ID_PART2, 25).
+			mapToObj(i ->  ReviewModelBuilder.create().withReviewID(i).withProductID(PRODUCT_ID_PART_2).withAuthor(AUTHOR + "_" + i).withSubject(SUBJECT + "_" + i).withContent(CONTENT).build()).
+			forEach(entity -> createAndVerifyStatus(entity, HttpStatus.CREATED));
+		
+		IntStream.rangeClosed(REVIEW_ID_PART3, 35).
+			mapToObj(i ->  ReviewModelBuilder.create().withReviewID(i).withProductID(PRODUCT_ID_PART_3).withAuthor(AUTHOR + "_" + i).withSubject(SUBJECT + "_" + i).withContent(CONTENT).build()).
 			forEach(entity -> createAndVerifyStatus(entity, HttpStatus.CREATED));
 	}
 	
 	@Test
-	public void getReview() {
+	public void crudTest() {
+
+		getReviewById();
+		getPagedReview();
+		getReviewNotFoundException();
+		getReviewInvalidInputException();
+		
+		createReviewDataIntegrityViolationException();
+		createReviewInvalidInputException();
+		
+		deleteReview();
+		deleteReviewAsynchronous();
+		deleteReviewBadRequest();
+		deleteReviewInvalidInputException();
+	}
+	
+	private void getReviewById() {
 		
 		asciiArt.display("GET REVIEW");
 		
-		/**
-		 * Get by reviewID.
-		 */
 		getAndVerifyStatus(REVIEW_ID, HttpStatus.OK).
 			jsonPath("$.content").isEqualTo(CONTENT);
+	}
+	
+	private void getPagedReview() {
+		
+		asciiArt.display("GET PAGED REVIEW");
 		
 		/**
 		 * Get review by productID.
@@ -122,19 +158,15 @@ public class ReviewServiceTest {
 			jsonPath("$.content[0].reviewID").isEqualTo(REVIEW_ID + 10);
 	}
 	
-	@Test
-	public void getReviewNotFoundException() {
+	private void getReviewNotFoundException() {
 		
 		asciiArt.display("GET REVIEW BUT NOT FOUND EXCEPTION");
 		
-		deleteAndVerifyStatus(REVIEW_ID, HttpStatus.OK);
-		
-		getAndVerifyStatus(REVIEW_ID, HttpStatus.NOT_FOUND).
-			jsonPath("$.message").isEqualTo(String.format("Review with reviewID=%d doesn't not exists.", REVIEW_ID));
+		getAndVerifyStatus(REVIEW_ID_NOT_FOUND, HttpStatus.NOT_FOUND).
+			jsonPath("$.message").isEqualTo(String.format("Review with reviewID=%d doesn't not exists.", REVIEW_ID_NOT_FOUND));
 	}
 	
-	@Test
-	public void getReviewInvalidInputException() {
+	private void getReviewInvalidInputException() {
 		
 		asciiArt.display("GET REVIEW BUT INVALID INPUT EXCEPTION");
 		
@@ -142,78 +174,55 @@ public class ReviewServiceTest {
 			jsonPath("$.message").isEqualTo("ReviewID should be greater than 0.");
 	}
 	
-	@Test
-	public void createReview() {
-		
-		asciiArt.display("CREATE REVIEW");
-		
-		IntStream.rangeClosed(50, 80).mapToObj(i -> new Review(i, 2, AUTHOR + "_" + i, SUBJECT + "_" + i, CONTENT)).
-			forEach(review -> createAndVerifyStatus(review, HttpStatus.CREATED));
-		
-		getAndVerifyStatus(50, HttpStatus.OK).
-			jsonPath("$.author").isEqualTo(AUTHOR + "_" + 50);
-	}
-	
-	@Test
-	public void createReviewDataIntegrityViolationException() {
+	private void createReviewDataIntegrityViolationException() {
 		
 		asciiArt.display("CREATE REVIEW BUT DATA INTEGRITY VIOLATION EXCEPTION");
 		
-		createAndVerifyStatus(new Review(REVIEW_ID, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT), HttpStatus.UNPROCESSABLE_ENTITY).
-			jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the reviewID (%d).", REVIEW_ID));
+		Review review = ReviewModelBuilder.create().withReviewID(REVIEW_ID_PART3).withProductID(PRODUCT_ID).
+				withAuthor(AUTHOR).withSubject(SUBJECT).withContent(CONTENT).build();
+		
+		createAndVerifyStatus(review, HttpStatus.UNPROCESSABLE_ENTITY).
+			jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the reviewID (%d).", REVIEW_ID_PART3));
 	}
 	
-	@Test
-	public void createReviewInvalidInputException() {
+	private void createReviewInvalidInputException() {
 		
 		asciiArt.display("CREATE REVIEW BUT INVALID INPUT EXCEPTION");
 		
-		createAndVerifyStatus(new Review(0, PRODUCT_ID, AUTHOR, SUBJECT, CONTENT), HttpStatus.UNPROCESSABLE_ENTITY).
+		Review review = ReviewModelBuilder.create().withReviewID(REVIEW_ID_INVALID_INPUT).withProductID(PRODUCT_ID).
+				withAuthor(AUTHOR).withSubject(SUBJECT).withContent(CONTENT).build();
+		
+		createAndVerifyStatus(review, HttpStatus.UNPROCESSABLE_ENTITY).
 			jsonPath("$.message").isEqualTo("ReviewID should be greater than 0.");
 	}
 	
-	@Test
-	public void deleteReview() {
+	private void deleteReview() {
 		
 		asciiArt.display("DELETE REVIEW BY PRODUCT ID");
 		
-		deleteAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
-		
-		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
-		params.add("productId", PRODUCT_ID.toString());
-		params.add("pageNumber", "0");
-		params.add("pageSize", "5");
-		
-		getAndVerifyStatus(params, HttpStatus.OK).
-			jsonPath("$.content.length()").isEqualTo(0);
+		deleteAndVerifyStatus(PRODUCT_ID_PART_1, HttpStatus.OK);
 	}
 	
-	@Test
-	public void deleteReviewBadRequest() {
+	private void deleteReviewAsynchronous() {
+		
+		asciiArt.display("DELETE REVIEW SYNCHRONOUS");
+		
+		sendDeleteReviewEvent(PRODUCT_ID_PART_2);
+	}
+	
+	private void deleteReviewBadRequest() {
 		
 		asciiArt.display("DELETE REVIEW BUT BAD REQUEST");
 		
 		deleteAndVerifyStatus(null, HttpStatus.BAD_REQUEST);
 	}
 	
-	@Test
-	public void deleteReviewInvalidInputException() {
+	private void deleteReviewInvalidInputException() {
 		
 		asciiArt.display("DELETE REVIEW BUT INVALID INPUT");
 		
 		deleteAndVerifyStatus(0, HttpStatus.UNPROCESSABLE_ENTITY).
 			jsonPath("$.message").isEqualTo("ProductID should be greater than 0.");
-	}
-	
-	@Test
-	public void deleteReviewAsynchronous() {
-		
-		asciiArt.display("DELETE REVIEW SYNCHRONOUS");
-		
-		sendDeleteReviewEvent(PRODUCT_ID);
-		assertThat(reviewRepository.findByProductID(PRODUCT_ID, PageRequest.of(0, 10)).getContent()).isEmpty();
-		
-		assertThat(output).contains(String.format(" > The review(s) with productID=%d has been deleted", PRODUCT_ID));
 	}
 	
 
@@ -277,5 +286,56 @@ public class ReviewServiceTest {
 		Event<Integer> event = new Event<>(reviewId, Event.Type.DELETE);
 		log.info(" > One message will be sent for a review deletion ({}).", event.toString());
 		channel.input().send(MessageBuilder.withPayload(event).build());
+	}
+	
+	public static class ReviewModelBuilder {
+		
+		private Integer reviewID;
+		private Integer productID;
+		private String author;
+		private String subject;
+		private String content;
+		
+		private ReviewModelBuilder() {}
+		
+		public static ReviewModelBuilder create() {
+			return new ReviewModelBuilder();
+		}
+		
+		public ReviewModelBuilder withReviewID(Integer reviewID) {
+			this.reviewID = reviewID;
+			return this;
+		}
+		
+		public ReviewModelBuilder withProductID(Integer productID) {
+			this.productID = productID;
+			return this;
+		}
+		
+		public ReviewModelBuilder withAuthor(String author) {
+			this.author = author;
+			return this;
+		}
+		
+		public ReviewModelBuilder withSubject(String subject) {
+			this.subject = subject;
+			return this;
+		}
+		
+		public ReviewModelBuilder withContent(String content) {
+			this.content = content;
+			return this;
+		}
+		
+		public Review build() {
+			
+			Review review = new Review();
+			review.setAuthor(author);
+			review.setContent(content);
+			review.setProductID(productID);
+			review.setReviewID(reviewID);
+			review.setSubject(subject);
+			return review;
+		}
 	}
 }

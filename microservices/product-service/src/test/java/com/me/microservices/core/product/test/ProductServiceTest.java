@@ -3,6 +3,7 @@ package com.me.microservices.core.product.test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
 
+import java.time.LocalDateTime;
 import java.util.stream.IntStream;
 
 import org.junit.Before;
@@ -25,8 +26,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
-import com.me.api.core.product.Product;
 import com.me.api.event.Event;
+import com.me.microservices.core.product.api.model.Product;
 import com.me.microservices.core.product.repository.ProductRepository;
 import com.me.microservices.core.product.services.AsciiArtService;
 
@@ -71,12 +72,10 @@ public class ProductServiceTest {
 		
 		productRepository.deleteAll().block();
 		
-		Product product = new Product(PRODUCT_ID, PRODUCT_NAME, PRODUCT_WEIGHT);
-		
-		createAndVerifyStatus(product, HttpStatus.CREATED).
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(PRODUCT_ID).withName(PRODUCT_NAME).withWeight(PRODUCT_WEIGHT).build(), HttpStatus.CREATED).
 			jsonPath("$.name").isEqualTo(PRODUCT_NAME);
 		
-		IntStream.rangeClosed(PRODUCT_ID + 1, 21).mapToObj(i -> new Product(i, PRODUCT_NAME + "_" + i, PRODUCT_WEIGHT + i)).
+		IntStream.rangeClosed(PRODUCT_ID + 1, 21).mapToObj(i -> ProductModelBuilder.create().withProductID(i).withName(PARAM_NAME + "_" + i).withWeight(PRODUCT_WEIGHT + i).build()).
 			forEach(p -> createAndVerifyStatus(p, HttpStatus.CREATED));
 	}
 	
@@ -115,12 +114,12 @@ public class ProductServiceTest {
 
 		asciiArt.display("GET PRODUCT BY NAME");
 		
-		createAndVerifyStatus(new Product(30, "MARTEAU EN BOIS", 3), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(31, "MARTEAU", 3), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(32, "MARTEAU MENUISIER", 4), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(33, "TOURNEVIS", 1), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(34, "TOURNEVIS ELECTRONIQUE", 1), HttpStatus.CREATED);
-		createAndVerifyStatus(new Product(35, "TOURNEVIS A FRAPPER", 2), HttpStatus.CREATED);
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(30).withName("MARTEAU EN BOIS").withWeight(3).build(), HttpStatus.CREATED);
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(31).withName("MARTEAU").withWeight(3).build(), HttpStatus.CREATED);
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(32).withName("MARTEAU MENUISIER").withWeight(4).build(), HttpStatus.CREATED);
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(33).withName("TOURNEVIS").withWeight(1).build(), HttpStatus.CREATED);
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(34).withName("TOURNEVIS ELECTRONIQUE").withWeight(1).build(), HttpStatus.CREATED);
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(35).withName("TOURNEVIS A FRAPPER").withWeight(2).build(), HttpStatus.CREATED);
 		
 		/**
 		 * PAGE 0.
@@ -167,16 +166,16 @@ public class ProductServiceTest {
 		
 		asciiArt.display("CREATE PRODUCT");
 		
-		createAndVerifyStatus(new Product(999, "SCIE CIRCULAIRE", 2), HttpStatus.CREATED).
-			jsonPath("$.name").isEqualTo("SCIE CIRCULAIRE");
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(999).withName("SCIE CIRCULAIRE").withWeight(2).build(), HttpStatus.CREATED).
+		jsonPath("$.name").isEqualTo("SCIE CIRCULAIRE");
 	}
 	
 	@Test
 	public void createProductWithEmptyName() {
 		
 		asciiArt.display("CREATE PRODUCT WITH EMPTY NAME");
-		
-		createAndVerifyStatus(new Product(999, "", PRODUCT_WEIGHT), HttpStatus.UNPROCESSABLE_ENTITY);
+
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(999).withName("").withWeight(PRODUCT_WEIGHT).build(), HttpStatus.UNPROCESSABLE_ENTITY);
 	}
 	
 	@Test
@@ -186,9 +185,8 @@ public class ProductServiceTest {
 		
 		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK);
 		
-		createAndVerifyStatus(new Product(PRODUCT_ID, PRODUCT_NAME, PRODUCT_WEIGHT), HttpStatus.UNPROCESSABLE_ENTITY).
-			jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", 
-					PRODUCT_ID, PRODUCT_NAME));
+		createAndVerifyStatus(ProductModelBuilder.create().withProductID(PRODUCT_ID).withName(PRODUCT_NAME).withWeight(PRODUCT_WEIGHT).build(), HttpStatus.UNPROCESSABLE_ENTITY).
+			jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the productID (%d) or the name (%s) of product.", PRODUCT_ID, PRODUCT_NAME));
 	}
 	
 	@Test
@@ -200,9 +198,7 @@ public class ProductServiceTest {
 			jsonPath("$.name").isEqualTo(PRODUCT_NAME).
 			jsonPath("$.weight").isEqualTo(PRODUCT_WEIGHT);
 		
-		Product product = new Product(PRODUCT_ID, PRODUCT_NAME, 50);
-		
-		updateAndVerifyStatus(product, HttpStatus.OK).
+		updateAndVerifyStatus(ProductModelBuilder.create().withProductID(PRODUCT_ID).withName(PRODUCT_NAME).withWeight(50).build(), HttpStatus.OK).
 			jsonPath("$.weight").isEqualTo(50);
 		
 		getAndVerifyStatus(PRODUCT_ID, HttpStatus.OK).
@@ -312,5 +308,56 @@ public class ProductServiceTest {
 		Event<Integer> event = new Event<>(productId, Event.Type.DELETE);
 		log.info(" > One message will be sent for a product deletion ({}).", event.toString());
 		channel.input().send(MessageBuilder.withPayload(event).build());
+	}
+	
+	public static final class ProductModelBuilder {
+		
+		private ProductModelBuilder() {}
+		
+		private Integer productID;
+		private String name;
+		private Integer weight;
+		private LocalDateTime creationDate;
+		private LocalDateTime updateDate;
+		
+		public static ProductModelBuilder create() {
+			return new ProductModelBuilder();
+		}
+		
+		public ProductModelBuilder withProductID(Integer productID) {
+			this.productID = productID;
+			return this;
+		}
+		
+		public ProductModelBuilder withName(String name) {
+			this.name = name;
+			return this;
+		}
+		
+		public ProductModelBuilder withWeight(Integer weight) {
+			this.weight = weight;
+			return this;
+		}
+		
+		public ProductModelBuilder initCreationDate() {
+			this.creationDate = LocalDateTime.now();
+			return this;
+		}
+		
+		public ProductModelBuilder initUpdateDate() {
+			this.updateDate = LocalDateTime.now();
+			return this;
+		}
+		
+		public Product build() {
+			
+			Product p = new Product();
+			p.setProductID(productID);
+			p.setName(name);
+			p.setWeight(weight);
+			p.setCreationDate(creationDate);
+			p.setUpdateDate(updateDate);
+			return p;
+		}
 	}
 }

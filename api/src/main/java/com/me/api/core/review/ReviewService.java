@@ -14,14 +14,15 @@ import com.me.api.core.common.Paged;
 
 import reactor.core.publisher.Mono;
 
+@Deprecated
 public interface ReviewService {
 
 	/**
 	 * @param reviewID
 	 * @return {@link Review}
 	 */
-	@GetMapping(value=Api.REVIEW_PATH + "/{reviewID}", produces=MediaType.APPLICATION_JSON_VALUE)
-	public Mono<Review> getReview(@PathVariable(name="reviewID", required=true) Integer reviewID);
+	@GetMapping(value=Api.REVIEW_PATH + "/{id}", produces=MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Review> getReview(@PathVariable(name="id", required=true) Integer reviewID);
 	
 	/**
 	 * @param productId
@@ -46,12 +47,12 @@ public interface ReviewService {
 	 * @param reviewID
 	 * @return {@link Review}
 	 */
-	@PutMapping(value=Api.REVIEW_PATH + "/{reviewID}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
-	public Mono<Review> update(@RequestBody Review review, @PathVariable(name="reviewID", required=true) Integer reviewID);
+	@PutMapping(value=Api.REVIEW_PATH + "/{id}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Review> update(@RequestBody Review review, @PathVariable(name="id", required=true) Integer reviewID);
 	
 	/**
 	 * @param productID
 	 */
-	@DeleteMapping(value=Api.REVIEW_PATH + "/{productID}")
-	public Mono<Void> deleteReviews(@PathVariable(name="productID", required=true) Integer productID);
+	@DeleteMapping(value=Api.REVIEW_PATH + "/{id}")
+	public Mono<Void> deleteReviews(@PathVariable(name="id", required=true) Integer productID);
 }

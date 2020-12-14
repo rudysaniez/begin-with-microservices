@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 import org.junit.Test;
 import org.mapstruct.factory.Mappers;
 
-import com.me.api.core.review.Review;
+import com.me.microservices.core.review.api.model.Review;
 import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.mapper.ReviewMapper;
 

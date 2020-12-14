@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.Test;
 import org.mapstruct.factory.Mappers;
 
-import com.me.api.core.product.Product;
+import com.me.microservices.core.product.api.model.Product;
 import com.me.microservices.core.product.bo.ProductEntity;
 import com.me.microservices.core.product.mapper.ProductMapper;
 

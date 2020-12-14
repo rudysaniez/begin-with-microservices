@@ -34,6 +34,34 @@
 			</plugin>
 			
 			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>4.3.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>microservices/recommendation-service/src/main/resources/contract/recommendation-api.yaml</inputSpec>
+							<generatorName>spring</generatorName>
+							<apiPackage>com.me.microservices.core.recommendation.api</apiPackage>
+							<modelPackage>com.me.microservices.core.recommendation.api.model</modelPackage>
+							<generateSupportingFiles>false</generateSupportingFiles>
+							
+							<configOptions>
+								<sourceFolder>src/generated/java</sourceFolder>
+								<dateLibrary>java8-localdatetime</dateLibrary>
+								<skipDefaultInterface>true</skipDefaultInterface>
+								<interfaceOnly>true</interfaceOnly>
+								<reactive>true</reactive>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
@@ -72,6 +100,18 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
+		</dependency>
+		
+		<!-- Openapi-generator-maven-plugin -->
+		<dependency>
+			<groupId>io.swagger.core.v3</groupId>
+			<artifactId>swagger-annotations</artifactId>
+			<version>2.1.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openapitools</groupId>
+			<artifactId>jackson-databind-nullable</artifactId>
+			<version>0.2.1</version>
 		</dependency>
 		
 		<!-- Open API and Swagger UI -->

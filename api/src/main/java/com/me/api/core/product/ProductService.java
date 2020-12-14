@@ -14,6 +14,7 @@ import com.me.api.core.common.Paged;
 
 import reactor.core.publisher.Mono;
 
+@Deprecated
 public interface ProductService {
 
 	/**
