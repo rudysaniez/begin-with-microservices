@@ -130,7 +130,7 @@ public class ReviewServiceImpl implements ReviewsApi {
 		return reviewRepository.findByReviewId(reviewID).
 			switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
 			log().
-			transform(m -> m.concatWith(modelToEntity).buffer().single().
+			transform(m -> m.concatWith(modelToEntity).collectList().
 					map(list -> {
 						
 						Optional<ReviewEntity> reviewInDatabase = list.stream().filter(re -> re.getId() != null).findFirst();

@@ -142,7 +142,7 @@ public class ProductServiceImpl implements ProductsApi {
 		return productRepository.findByProductID(productID).
 			switchIfEmpty(Mono.error(new NotFoundException(String.format("Product with productID=%d doesn't not exists.", productID)))).
 			log().
-			transform(m -> m.concatWith(modelToEntity).buffer().single().
+			transform(m -> m.concatWith(modelToEntity).collectList().
 					map(list -> {
 						
 						Optional<ProductEntity> productInDatabase = list.stream().filter(pe -> StringUtils.isNotBlank(pe.getId())).findFirst();

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
 
+@Deprecated
 @Data @AllArgsConstructor
 public class RecommendationSummary {
 

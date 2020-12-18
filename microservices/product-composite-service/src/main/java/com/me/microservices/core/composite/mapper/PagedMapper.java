@@ -2,37 +2,23 @@ package com.me.microservices.core.composite.mapper;
 
 import org.mapstruct.Mapper;
 
-import com.me.api.composite.RecommendationSummary;
-import com.me.api.composite.ReviewSummary;
-import com.me.api.core.common.Paged;
-import com.me.api.core.recommendation.Recommendation;
-import com.me.api.core.review.Review;
+import com.me.microservices.core.productcomposite.api.model.PagedRecommendationSummary;
+import com.me.microservices.core.productcomposite.api.model.PagedReviewSummary;
+import com.me.microservices.core.recommendation.api.model.PagedRecommendation;
+import com.me.microservices.core.review.api.model.PagedReview;
 
-@Mapper(uses= {RecommendationMapper.class, ReviewMapper.class})
+@Mapper
 public interface PagedMapper {
 
 	/**
-	 * @param msPaged
-	 * @return page of {@link RecommendationSummary}
+	 * @param page
+	 * @return {@link PagedRecommendationSummary}
 	 */
-	public Paged<RecommendationSummary> toPageRecommendationModel(Paged<Recommendation> msPaged);
+	public PagedRecommendationSummary toPagedRecommendationSummary(PagedRecommendation page);
 	
 	/**
-	 * @param msPaged
-	 * @return page of {@link ReviewSummary}
+	 * @param page
+	 * @return {@link PagedReviewSummary}
 	 */
-	public Paged<ReviewSummary> toPageReviewModel(Paged<Review> msPaged);
-	
-	
-	/**
-	 * @param pageModel
-	 * @return page of {@link Recommendation}
-	 */
-	public Paged<Recommendation> toMsPageRecommendation(Paged<RecommendationSummary> pageModel);
-	
-	/**
-	 * @param pageModel
-	 * @return page of {@link Review}
-	 */
-	public Paged<Review> toMsPageReview(Paged<ReviewSummary> pageModel);
+	public PagedReviewSummary toPageReviewSummary(PagedReview page);
 }

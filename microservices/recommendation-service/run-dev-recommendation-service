@@ -4,6 +4,6 @@ set -e
 
 cd $(dirname $0)
 
-docker run --rm -d --name recommendation-service -p 8082:8082 -e JAVA_OPTS="-Xms512M -Xmx512M" -e "SPRING_PROFILES_ACTIVE=docker" recommendation-service
+docker run --rm -d --name recommendation-service -p 8082:8082 -e JAVA_OPTS="-Xms512M -Xmx512M" -e SPRING_PROFILES_ACTIVE="dev" recommendation-service
 
 cd -

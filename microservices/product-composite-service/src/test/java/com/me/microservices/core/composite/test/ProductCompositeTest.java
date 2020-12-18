@@ -3,7 +3,7 @@ package com.me.microservices.core.composite.test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
+import java.time.LocalDateTime;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec;
@@ -22,15 +23,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
-import com.me.api.core.common.PageMetadata;
-import com.me.api.core.common.Paged;
-import com.me.api.core.product.Product;
-import com.me.api.core.recommendation.Recommendation;
-import com.me.api.core.review.Review;
 import com.me.handler.exception.InvalidInputException;
 import com.me.handler.exception.NotFoundException;
 import com.me.microservices.core.composite.Application.PaginationInformation;
-import com.me.microservices.core.composite.services.ProductCompositeIntegration;
+import com.me.microservices.core.composite.builder.PagedRecommendationBuilder;
+import com.me.microservices.core.composite.builder.PagedReviewBuilder;
+import com.me.microservices.core.composite.builder.ProductBuilder;
+import com.me.microservices.core.composite.integration.ProductIntegration;
+import com.me.microservices.core.composite.integration.RecommendationIntegration;
+import com.me.microservices.core.composite.integration.ReviewIntegration;
+import com.me.microservices.core.recommendation.api.model.PagedRecommendation;
+import com.me.microservices.core.review.api.model.PagedReview;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -39,8 +42,9 @@ import reactor.test.StepVerifier;
 @SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)
 public class ProductCompositeTest {
 
-	@MockBean
-	private ProductCompositeIntegration integration;
+	@MockBean private ProductIntegration productIntegration;
+	@MockBean private RecommendationIntegration recommendationIntegration;
+	@MockBean private ReviewIntegration reviewIntegration;
 	
 	@Autowired
 	private WebTestClient client;
@@ -65,37 +69,41 @@ public class ProductCompositeTest {
 		/**
 		 * Micro service core : Product.
 		 */
-		when(integration.getProduct(PRODUCT_ID)).
-			thenReturn(Mono.just(new Product(PRODUCT_ID, PRODUCT_NAME, 10)));
+		when(productIntegration.getProduct(PRODUCT_ID, null)).
+			thenReturn(Mono.just(ResponseEntity.ok(ProductBuilder.create().withProductID(PRODUCT_ID).withName(PRODUCT_NAME).withWeight(10).build())));
 		
 		/**
 		 * Micro service core : Recommendation.
 		 */
-		when(integration.getRecommendationByProductId(PRODUCT_ID, pagination.getPageNumber(), pagination.getPageSize())).
-			thenReturn(Mono.just(new Paged<>(Collections.singletonList(new Recommendation(RECOMMENDATION_ID, PRODUCT_ID, "rudysaniez", 1, "This product is good!")), 
-				new PageMetadata(1, 1, 1, 0))));
+		
+		PagedRecommendation pagedRecommendation = PagedRecommendationBuilder.create().withRecommendation(RECOMMENDATION_ID, PRODUCT_ID, "rudysaniez", 1, "This product is good!", LocalDateTime.now()).
+			withPageMetadata(1L, 1L, 1L, 0L).build();
+		
+		when(recommendationIntegration.getRecommendationByProductId(PRODUCT_ID, pagination.getPageNumber(), pagination.getPageSize(), null)).
+			thenReturn(Mono.just(ResponseEntity.ok(pagedRecommendation)));
 
 		/**
 		 * Mirco service core : Review.
 		 */
-		when(integration.getReviewByProductId(PRODUCT_ID, pagination.getPageNumber(), pagination.getPageSize())).
-			thenReturn(Mono.just(new Paged<>(Collections.singletonList(new Review(REVIEW_ID, PRODUCT_ID, "rudysaniez", "Good product", "This product is very good!")), 
-				new PageMetadata(1, 1, 1, 0))));
+		PagedReview pagedReview = PagedReviewBuilder.create().withReview(REVIEW_ID, PRODUCT_ID, "rudysaniez", "Good product", "This product is very good!", LocalDateTime.now()).
+					withPageMetadata(1L, 1L, 1L, 0L).build();
+		
+		when(reviewIntegration.getReviewByProductId(PRODUCT_ID, pagination.getPageNumber(), pagination.getPageSize(), null)).
+			thenReturn(Mono.just(ResponseEntity.ok(pagedReview)));
 
 		/**
 		 * Micro service core : Product not found.
 		 */
-		when(this.integration.getProduct(PRODUCT_NOT_FOUND)).
+		when(productIntegration.getProduct(PRODUCT_NOT_FOUND, null)).
 			thenThrow(new NotFoundException(String.format("The product %d doesn't not exist", PRODUCT_NOT_FOUND)));
 		
 		/**
 		 * Micro service core : Product invalid input.
 		 */
-		when(this.integration.getProduct(PRODUCT_INVALID_INPUT)).
+		when(productIntegration.getProduct(PRODUCT_INVALID_INPUT, null)).
 			thenThrow(new InvalidInputException(String.format("The product %d is an invalid input", PRODUCT_INVALID_INPUT)));
 	}
 	
-	@Test
 	public void getCompositeProduct() {
 		
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
@@ -108,7 +116,6 @@ public class ProductCompositeTest {
 			jsonPath("$.reviews.content[0].reviewID").isEqualTo(1);
 	}
 	
-	@Test
 	public void getProductNotFoundException() {
 		
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
@@ -119,7 +126,6 @@ public class ProductCompositeTest {
 		jsonPath("$.message").isEqualTo(String.format("The product %d doesn't not exist", PRODUCT_NOT_FOUND));
 	}
 	
-	@Test
 	public void getProductInvalidInputException() {
 		
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
@@ -132,16 +138,17 @@ public class ProductCompositeTest {
 	@Test
 	public void getMockedObjects() {
 		
-		StepVerifier.create(integration.getProduct(PRODUCT_ID)).expectNextMatches(p -> p.getProductID().equals(PRODUCT_ID)).
+		StepVerifier.create(productIntegration.getProduct(PRODUCT_ID, null)).
+			expectNextMatches(p -> p.getBody().getProductID().equals(PRODUCT_ID)).
 			verifyComplete();
 		
-		Paged<Review> pageOfReview = integration.getReviewByProductId(PRODUCT_ID, pagination.getPageNumber(), 
-				pagination.getPageSize()).block();
+		PagedReview pageOfReview = reviewIntegration.getReviewByProductId(PRODUCT_ID, pagination.getPageNumber(), 
+				pagination.getPageSize(), null).map(rs -> rs.getBody()).block();
 		assertThat(pageOfReview.getContent()).isNotEmpty();
 		
 		
-		Paged<Recommendation> pageOfRecommendation = integration.getRecommendationByProductId(PRODUCT_ID, pagination.getPageNumber(), 
-				pagination.getPageSize()).block();
+		PagedRecommendation pageOfRecommendation = recommendationIntegration.getRecommendationByProductId(PRODUCT_ID, pagination.getPageNumber(), 
+				pagination.getPageSize(), null).map(rs -> rs.getBody()).block();
 		assertThat(pageOfRecommendation.getContent()).isNotEmpty();
 		
 	}

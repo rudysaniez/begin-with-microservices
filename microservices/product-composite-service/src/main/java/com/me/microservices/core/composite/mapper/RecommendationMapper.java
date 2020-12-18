@@ -6,8 +6,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
-import com.me.api.composite.RecommendationSummary;
-import com.me.api.core.recommendation.Recommendation;
+import com.me.microservices.core.productcomposite.api.model.RecommendationSummary;
+import com.me.microservices.core.recommendation.api.model.Recommendation;
 
 @Mapper
 public interface RecommendationMapper {
@@ -20,23 +20,23 @@ public interface RecommendationMapper {
 			@Mapping(target="productID", ignore=true), 
 			@Mapping(target="creationDate", ignore=true),
 			@Mapping(target="updateDate", ignore=true)})
-	public Recommendation toMsModel(RecommendationSummary recommendationSummary);
+	public Recommendation toCoreModel(RecommendationSummary recommendationSummary);
 	
 	/**
 	 * @param listOfRecommendationSummary
 	 * @return list of {@link Recommendation}
 	 */
-	public List<Recommendation> toListOfMsModel(List<RecommendationSummary> listOfRecommendationSummary);
+	public List<Recommendation> toCoreModels(List<RecommendationSummary> listOfRecommendationSummary);
 	
 	/**
 	 * @param msModel
 	 * @return {@link RecommendationSummary}
 	 */
-	public RecommendationSummary toModel(Recommendation msRecommendation);
+	public RecommendationSummary toSummary(Recommendation msRecommendation);
 	
 	/**
 	 * @param listOfMsModel
 	 * @return list of {@link RecommendationSummary}
 	 */
-	public List<RecommendationSummary> toListOfModel(List<Recommendation> listOfMsRecommendation);
+	public List<RecommendationSummary> toSummaries(List<Recommendation> listOfMsRecommendation);
 }

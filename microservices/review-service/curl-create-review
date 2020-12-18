@@ -9,5 +9,3 @@ curl -X POST -H 'Content-Type: application/json'  -d '{ "reviewID": 50, "product
 curl -X POST -H 'Content-Type: application/json'  -d '{ "reviewID": 51, "productID": 50, "author": "nathansaniez", "subject": "My opinion : bad !", "content": "Don t buy it !" }' http://localhost:8083/api/v1/reviews -s | jq
 
 curl -X POST -H 'Content-Type: application/json'  -d '{ "reviewID": 52, "productID": 50, "author": "stephanesaniez", "subject": "Well!", "content": "This product is well. Good conception." }' http://localhost:8083/api/v1/reviews -s | jq
-
-cd -

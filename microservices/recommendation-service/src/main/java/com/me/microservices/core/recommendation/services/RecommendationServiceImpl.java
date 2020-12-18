@@ -142,7 +142,7 @@ public class RecommendationServiceImpl implements RecommendationsApi {
 		return recommendationRepository.findByRecommendationID(recommendationID).
 				switchIfEmpty(Mono.error(new NotFoundException(String.format("Recommendation with recommendationID=%d doesn't not exists.", recommendationID)))).
 				log().
-				transform(m -> m.concatWith(modelToEntity).buffer().single().
+				transform(m -> m.concatWith(modelToEntity).collectList().
 						map(list -> {
 							
 							Optional<RecommendationEntity> recommendationInDatabase = list.stream().filter(re -> StringUtils.isNotBlank(re.getId())).findFirst();

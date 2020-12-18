@@ -4,6 +4,6 @@ set -e
 
 cd $(dirname $0)
 
-docker run --rm -d --name product-composite-service -p 8081:8081 -ti -e JAVA_OPTS="-Xms512M -Xmx512M" -e "SPRING_PROFILES_ACTIVE=docker" product-composite-service
+docker run --rm -d --name product-composite-service -p 9080:9080 -ti -e JAVA_OPTS="-Xms512M -Xmx512M" -e SPRING_PROFILES_ACTIVE="dev" product-composite-service
 
 cd -

@@ -12,6 +12,7 @@ import com.me.api.Api;
 
 import reactor.core.publisher.Mono;
 
+@Deprecated
 public interface ProductCompositeService {
 
 	/**
