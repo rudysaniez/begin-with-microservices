@@ -45,6 +45,8 @@ public class ProductCompositeServiceImpl implements ProductsCompositeApi {
 	@Autowired private PagedMapper pagedMapper;
 	@Autowired private PaginationInformation pagination;
 	
+	private static final ServerWebExchange USELESS = null;
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -55,9 +57,9 @@ public class ProductCompositeServiceImpl implements ProductsCompositeApi {
 		if(pageSize == null) pageSize = pagination.getPageSize();
 		
 		return Mono.zip(values -> createProductAggregate((Product)values[0], (PagedRecommendation)values[1], (PagedReview)values[2]), 
-				productIntegration.getProduct(productId, exchange).map(re -> re.getBody()),
-				recommendationIntegration.getRecommendationByProductId(productId, pageNumber, pageSize, exchange).map(re -> re.getBody()),
-				reviewIntegration.getReviewByProductId(productId, pageNumber, pageSize, exchange).map(re -> re.getBody())).
+				productIntegration.getProduct(productId, USELESS).map(re -> re.getBody()),
+				recommendationIntegration.getRecommendationByProductId(productId, pageNumber, pageSize, USELESS).map(re -> re.getBody()),
+				reviewIntegration.getReviewByProductId(productId, pageNumber, pageSize, USELESS).map(re -> re.getBody())).
 				map(pa -> ResponseEntity.ok(pa)).
 				log();
 	}
@@ -97,13 +99,13 @@ public class ProductCompositeServiceImpl implements ProductsCompositeApi {
 		return Mono.zip(values -> createProductComposite((Product)values[0], 
 				(List<Recommendation>)values[1], (List<Review>)values[2]),
 			
-				productIntegration.save(monoOfProduct, exchange).log().
+				productIntegration.save(monoOfProduct, USELESS).log().
 					map(rs -> rs.getBody())
 				,
-				fluxOfRecommendation.flatMap(r -> recommendationIntegration.save(Mono.just(r), exchange)).log().
+				fluxOfRecommendation.flatMap(r -> recommendationIntegration.save(Mono.just(r), USELESS)).log().
 				map(re -> re.getBody()).collectList()
 				,
-				fluxOfReview.flatMap(r -> reviewIntegration.save(Mono.just(r), exchange)).log().
+				fluxOfReview.flatMap(r -> reviewIntegration.save(Mono.just(r), USELESS)).log().
 				map(re -> re.getBody()).collectList()
 		).
 		map(pc -> ResponseEntity.ok(pc)).

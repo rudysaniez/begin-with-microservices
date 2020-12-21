@@ -3,6 +3,7 @@ package com.me.microservices.core.composite.test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 import org.junit.Before;
@@ -46,14 +47,9 @@ public class ProductCompositeTest {
 	@MockBean private RecommendationIntegration recommendationIntegration;
 	@MockBean private ReviewIntegration reviewIntegration;
 	
-	@Autowired
-	private WebTestClient client;
-	
-	@Autowired
-	private PaginationInformation pagination;
-	
-	@Value("${spring.webflux.base-path}") 
-	private String basePath;
+	@Autowired private WebTestClient client;
+	@Value("${spring.webflux.base-path}") private String basePath;
+	@Autowired private PaginationInformation pagination;
 	
 	private static final Integer PRODUCT_ID = 1;
 	private static final Integer RECOMMENDATION_ID = 1;
@@ -64,7 +60,7 @@ public class ProductCompositeTest {
 	private static final String PRODUCT_NAME = "Panneau solaire";
 	
 	@Before
-	public void setup() {
+	public void setup() throws IOException {
 		
 		/**
 		 * Micro service core : Product.
@@ -104,6 +100,7 @@ public class ProductCompositeTest {
 			thenThrow(new InvalidInputException(String.format("The product %d is an invalid input", PRODUCT_INVALID_INPUT)));
 	}
 	
+	@Test
 	public void getCompositeProduct() {
 		
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
@@ -116,6 +113,7 @@ public class ProductCompositeTest {
 			jsonPath("$.reviews.content[0].reviewID").isEqualTo(1);
 	}
 	
+	@Test
 	public void getProductNotFoundException() {
 		
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
@@ -123,9 +121,10 @@ public class ProductCompositeTest {
 		params.add("pageSize", String.valueOf(pagination.getPageSize()));
 		
 		getAndVerifyStatus(PRODUCT_NOT_FOUND, HttpStatus.NOT_FOUND).
-		jsonPath("$.message").isEqualTo(String.format("The product %d doesn't not exist", PRODUCT_NOT_FOUND));
+			jsonPath("$.message").isEqualTo(String.format("The product %d doesn't not exist", PRODUCT_NOT_FOUND));
 	}
 	
+	@Test
 	public void getProductInvalidInputException() {
 		
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>(3);
