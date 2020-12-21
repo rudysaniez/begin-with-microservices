@@ -1,0 +1,336 @@
+---
+openapi: 3.0.1
+info:
+  title: Product-api
+  version: v0
+  description: Product REST API.
+  contact:
+    name: RUDY SANIEZ
+    email: rudysaniez@laposte.net
+servers:
+- url: http://localhost:8081/api/v1
+  description: Generated server url
+paths:
+  /products/{productID}:
+    summary: "Get, update and delete a product."
+    get:
+      tags:
+      - product-service-impl
+      parameters:
+      - name: productID
+        description: Product identifier.
+        schema:
+          format: int32
+          type: integer
+        in: path
+        required: true
+      responses:
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Not Found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Unprocessable Entity
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: OK
+      operationId: getProduct
+      summary: Get a product by ID.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+            examples:
+              update-product:
+                value:
+                  productID: 50
+                  name: FER A SOUDER
+                  weight: 0
+        required: true
+      tags:
+      - product-service-impl
+      parameters:
+      - name: productID
+        description: Product identifier.
+        schema:
+          format: int32
+          type: integer
+        in: path
+        required: true
+      responses:
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Not Found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Unprocessable Entity
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: OK
+      operationId: update
+      summary: Update a product.
+    delete:
+      tags:
+      - product-service-impl
+      parameters:
+      - name: productID
+        description: Product identifier.
+        schema:
+          format: int32
+          type: integer
+        in: path
+        required: true
+      responses:
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Not Found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Unprocessable Entity
+        "200":
+          description: OK
+      operationId: deleteProduct
+      summary: Delete a product by ID.
+    parameters:
+    - name: productID
+      description: Product identifier.
+      schema:
+        format: int32
+        type: integer
+      in: path
+      required: true
+  /products:
+    summary: Get page of products and create products.
+    get:
+      tags:
+      - product-service-impl
+      parameters:
+      - name: name
+        description: product name.
+        schema:
+          type: string
+        in: query
+        required: true
+      - name: pageNumber
+        description: page number.
+        schema:
+          format: int32
+          type: integer
+        in: query
+        required: false
+      - name: pageSize
+        description: page size.
+        schema:
+          format: int32
+          type: integer
+        in: query
+        required: false
+      responses:
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Not Found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Unprocessable Entity
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedProduct'
+          description: OK
+      operationId: findByName
+      summary: Find products.
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+            examples:
+              product-creation:
+                value:
+                  productID: 50
+                  name: FER A SOUDER
+                  weight: 0
+        required: true
+      tags:
+      - product-service-impl
+      responses:
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Not Found
+        "422":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/HttpErrorInfo'
+          description: Unprocessable Entity
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: Created
+      operationId: save
+      summary: Product creation.
+components:
+  schemas:
+    HttpErrorInfo:
+      type: object
+      properties:
+        timestamp:
+          format: date-time
+          type: string
+        path:
+          type: string
+        httpStatus:
+          enum:
+          - 100 CONTINUE
+          - 101 SWITCHING_PROTOCOLS
+          - 102 PROCESSING
+          - 103 CHECKPOINT
+          - 200 OK
+          - 201 CREATED
+          - 202 ACCEPTED
+          - 203 NON_AUTHORITATIVE_INFORMATION
+          - 204 NO_CONTENT
+          - 205 RESET_CONTENT
+          - 206 PARTIAL_CONTENT
+          - 207 MULTI_STATUS
+          - 208 ALREADY_REPORTED
+          - 226 IM_USED
+          - 300 MULTIPLE_CHOICES
+          - 301 MOVED_PERMANENTLY
+          - 302 FOUND
+          - 302 MOVED_TEMPORARILY
+          - 303 SEE_OTHER
+          - 304 NOT_MODIFIED
+          - 305 USE_PROXY
+          - 307 TEMPORARY_REDIRECT
+          - 308 PERMANENT_REDIRECT
+          - 400 BAD_REQUEST
+          - 401 UNAUTHORIZED
+          - 402 PAYMENT_REQUIRED
+          - 403 FORBIDDEN
+          - 404 NOT_FOUND
+          - 405 METHOD_NOT_ALLOWED
+          - 406 NOT_ACCEPTABLE
+          - 407 PROXY_AUTHENTICATION_REQUIRED
+          - 408 REQUEST_TIMEOUT
+          - 409 CONFLICT
+          - 410 GONE
+          - 411 LENGTH_REQUIRED
+          - 412 PRECONDITION_FAILED
+          - 413 PAYLOAD_TOO_LARGE
+          - 413 REQUEST_ENTITY_TOO_LARGE
+          - 414 URI_TOO_LONG
+          - 414 REQUEST_URI_TOO_LONG
+          - 415 UNSUPPORTED_MEDIA_TYPE
+          - 416 REQUESTED_RANGE_NOT_SATISFIABLE
+          - 417 EXPECTATION_FAILED
+          - 418 I_AM_A_TEAPOT
+          - 419 INSUFFICIENT_SPACE_ON_RESOURCE
+          - 420 METHOD_FAILURE
+          - 421 DESTINATION_LOCKED
+          - 422 UNPROCESSABLE_ENTITY
+          - 423 LOCKED
+          - 424 FAILED_DEPENDENCY
+          - 425 TOO_EARLY
+          - 426 UPGRADE_REQUIRED
+          - 428 PRECONDITION_REQUIRED
+          - 429 TOO_MANY_REQUESTS
+          - 431 REQUEST_HEADER_FIELDS_TOO_LARGE
+          - 451 UNAVAILABLE_FOR_LEGAL_REASONS
+          - 500 INTERNAL_SERVER_ERROR
+          - 501 NOT_IMPLEMENTED
+          - 502 BAD_GATEWAY
+          - 503 SERVICE_UNAVAILABLE
+          - 504 GATEWAY_TIMEOUT
+          - 505 HTTP_VERSION_NOT_SUPPORTED
+          - 506 VARIANT_ALSO_NEGOTIATES
+          - 507 INSUFFICIENT_STORAGE
+          - 508 LOOP_DETECTED
+          - 509 BANDWIDTH_LIMIT_EXCEEDED
+          - 510 NOT_EXTENDED
+          - 511 NETWORK_AUTHENTICATION_REQUIRED
+          type: string
+        message:
+          type: string
+    Product:
+      type: object
+      properties:
+        productID:
+          format: int32
+          type: integer
+        name:
+          description: Product name.
+          type: string
+        weight:
+          format: int32
+          type: integer
+        creationDate:
+          format: date-time
+          description: Product creaction date.
+          type: string
+        updateDate:
+          format: date-time
+          type: string
+    PageMetadata:
+      type: object
+      properties:
+        size:
+          format: int64
+          type: integer
+        totalElements:
+          format: int64
+          type: integer
+        totalPages:
+          format: int64
+          type: integer
+        number:
+          format: int64
+          type: integer
+    PagedProduct:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        page:
+          $ref: '#/components/schemas/PageMetadata'

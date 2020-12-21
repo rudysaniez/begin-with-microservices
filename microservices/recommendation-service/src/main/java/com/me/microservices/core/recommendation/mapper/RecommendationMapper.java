@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
-import com.me.api.core.recommendation.Recommendation;
+import com.me.microservices.core.recommendation.api.model.Recommendation;
 import com.me.microservices.core.recommendation.bo.RecommendationEntity;
 
 @Mapper

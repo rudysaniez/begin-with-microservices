@@ -14,14 +14,15 @@ import com.me.api.core.common.Paged;
 
 import reactor.core.publisher.Mono;
 
+@Deprecated
 public interface RecommendationService {
 
 	/**
 	 * @param recommendationID
 	 * @return {@link Recommendation}
 	 */
-	@GetMapping(value=Api.RECOMMENDATION_PATH + "/{recommendationID}", produces=MediaType.APPLICATION_JSON_VALUE)
-	public Mono<Recommendation> getRecommendation(@PathVariable(name="recommendationID", required=true) Integer recommendationID);
+	@GetMapping(value=Api.RECOMMENDATION_PATH + "/{id}", produces=MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Recommendation> getRecommendation(@PathVariable(name="id", required=true) Integer recommendationID);
 	
 	/**
 	 * @param productId
@@ -46,12 +47,12 @@ public interface RecommendationService {
 	 * @param recommendationID
 	 * @return {@link Recommendation}
 	 */
-	@PutMapping(value=Api.RECOMMENDATION_PATH + "/{recommendationID}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
-	public Mono<Recommendation> update(@RequestBody Recommendation recommendation, @PathVariable(name="recommendationID", required=true) Integer recommendationID);
+	@PutMapping(value=Api.RECOMMENDATION_PATH + "/{id}", consumes=MediaType.APPLICATION_JSON_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
+	public Mono<Recommendation> update(@RequestBody Recommendation recommendation, @PathVariable(name="id", required=true) Integer recommendationID);
 	
 	/**
 	 * @param productID
 	 */
-	@DeleteMapping(value=Api.RECOMMENDATION_PATH + "/{productID}")
-	public Mono<Void> deleteRecommendations(@PathVariable(name="productID", required=true) Integer productID);
+	@DeleteMapping(value=Api.RECOMMENDATION_PATH + "/{id}")
+	public Mono<Void> deleteRecommendations(@PathVariable(name="id", required=true) Integer productID);
 }

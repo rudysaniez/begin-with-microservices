@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
 import lombok.NoArgsConstructor;
 
+@Deprecated
 @NoArgsConstructor @Data
 public class Review  {
 

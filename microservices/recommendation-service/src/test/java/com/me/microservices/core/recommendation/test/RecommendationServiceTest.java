@@ -1,5 +1,6 @@
 package com.me.microservices.core.recommendation.test;
 
+import java.time.LocalDateTime;
 import java.util.stream.IntStream;
 
 import org.junit.Before;
@@ -22,8 +23,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.me.api.Api;
-import com.me.api.core.recommendation.Recommendation;
 import com.me.api.event.Event;
+import com.me.microservices.core.recommendation.api.model.Recommendation;
 import com.me.microservices.core.recommendation.bo.RecommendationEntity;
 import com.me.microservices.core.recommendation.mapper.RecommendationMapper;
 import com.me.microservices.core.recommendation.repository.RecommendationRepository;
@@ -72,13 +73,14 @@ public class RecommendationServiceTest {
 		
 		recommendationRepository.deleteAll().block();
 		
-		Recommendation model = new Recommendation(RECOMMENDATION_ID, PRODUCT_ID, AUTHOR, RATE, CONTENT);
+		Recommendation model = RecommendationModelBuilder.create().withRecommendationID(RECOMMENDATION_ID).
+				withProductID(PRODUCT_ID).withAuthor(AUTHOR).withRate(RATE).withContent(CONTENT).build();
 		
 		createAndVerifyStatus(model, HttpStatus.CREATED).
 			jsonPath("$.content").isEqualTo(CONTENT).
 			jsonPath("$.author").isEqualTo(AUTHOR);
 		
-		IntStream.rangeClosed(RECOMMENDATION_ID + 1, 21).mapToObj(i -> new Recommendation(i, PRODUCT_ID, AUTHOR + "_" + i, RATE + i, CONTENT)).
+		IntStream.rangeClosed(RECOMMENDATION_ID + 1, 21).mapToObj(i ->  RecommendationModelBuilder.create().withRecommendationID(i).withProductID(PRODUCT_ID).withAuthor(AUTHOR + "_" + i).withRate(RATE + i).withContent(CONTENT).build()).
 			forEach(r -> createAndVerifyStatus(r, HttpStatus.CREATED));
 	}
 	
@@ -146,7 +148,8 @@ public class RecommendationServiceTest {
 		
 		asciiArt.display("CREATE RECOMMENDATION");
 		
-		Recommendation entity = new Recommendation(50, 2, AUTHOR + "_50", RATE, CONTENT);
+		Recommendation entity = RecommendationModelBuilder.create().withRecommendationID(50).withProductID(2).
+				withAuthor(AUTHOR + "_50").withRate(RATE).withContent(CONTENT).build();
 		
 		createAndVerifyStatus(entity, HttpStatus.CREATED).
 			jsonPath("$.author").isEqualTo(AUTHOR + "_50").
@@ -162,7 +165,8 @@ public class RecommendationServiceTest {
 		
 		asciiArt.display("CREATE RECOMMENDATION BUT DUPLICATE KEY EXCEPTION");
 		
-		Recommendation model = new Recommendation(RECOMMENDATION_ID, PRODUCT_ID, AUTHOR, RATE, CONTENT);
+		Recommendation model = RecommendationModelBuilder.create().withRecommendationID(RECOMMENDATION_ID).
+				withProductID(PRODUCT_ID).withAuthor(AUTHOR).withRate(RATE).withContent(CONTENT).build();
 		
 		createAndVerifyStatus(model, HttpStatus.UNPROCESSABLE_ENTITY).
 			jsonPath("$.message").isEqualTo(String.format("Duplicate key : check the recommendationID (%d).", RECOMMENDATION_ID));
@@ -299,5 +303,70 @@ public class RecommendationServiceTest {
 		Event<Integer> event = new Event<>(recommendationId, Event.Type.DELETE);
 		log.info(" > One message will be sent for a recommendation deletion ({}).", event.toString());
 		channel.input().send(MessageBuilder.withPayload(event).build());
+	}
+	
+	public static class RecommendationModelBuilder {
+		
+		private Integer recommendationID;
+		private Integer productID;
+		private String author;
+		private Integer rate;
+		private String content;
+		private LocalDateTime creationDate;
+		private LocalDateTime updateDate;
+		
+		private RecommendationModelBuilder() {}
+		
+		public static RecommendationModelBuilder create() {
+			return new RecommendationModelBuilder();
+		}
+		
+		public RecommendationModelBuilder withRecommendationID(Integer recommendationID) {
+			this.recommendationID = recommendationID;
+			return this;
+		}
+		
+		public RecommendationModelBuilder withProductID(Integer productID) {
+			this.productID = productID;
+			return this;
+		}
+		
+		public RecommendationModelBuilder withAuthor(String author) {
+			this.author = author;
+			return this;
+		}
+		
+		public RecommendationModelBuilder withRate(Integer rate) {
+			this.rate = rate;
+			return this;
+		}
+		
+		public RecommendationModelBuilder withContent(String content) {
+			this.content = content;
+			return this;
+		}
+		
+		public RecommendationModelBuilder initCreationDate() {
+			this.creationDate = LocalDateTime.now();
+			return this;
+		}
+		
+		public RecommendationModelBuilder initUpdateDate() {
+			this.updateDate = LocalDateTime.now();
+			return this;
+		}
+		
+		public Recommendation build() {
+			
+			Recommendation r = new Recommendation();
+			r.setAuthor(author);
+			r.setContent(content);
+			r.setProductID(productID);
+			r.setRate(rate);
+			r.setRecommendationID(recommendationID);
+			r.setCreationDate(creationDate);
+			r.setUpdateDate(updateDate);
+			return r;
+		}
 	}
 }

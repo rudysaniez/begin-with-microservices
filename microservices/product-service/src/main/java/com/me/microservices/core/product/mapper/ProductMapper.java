@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
-import com.me.api.core.product.Product;
+import com.me.microservices.core.product.api.model.Product;
 import com.me.microservices.core.product.bo.ProductEntity;
 
 @Mapper

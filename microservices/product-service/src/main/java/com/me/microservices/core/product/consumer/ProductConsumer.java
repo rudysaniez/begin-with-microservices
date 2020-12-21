@@ -8,9 +8,9 @@ import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
-import com.me.api.core.product.ProductService;
 import com.me.api.event.Event;
 import com.me.handler.exception.NotFoundException;
+import com.me.microservices.core.product.api.ProductsApi;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,10 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class ProductConsumer {
 
-	private final ProductService productService;
+	private final ProductsApi productService;
 	
 	@Autowired
-	public ProductConsumer(ProductService productService) {
+	public ProductConsumer(ProductsApi productService) {
 		this.productService = productService;
 	}
 	
@@ -40,7 +40,7 @@ public class ProductConsumer {
 			switch(event.getType()) {
 			
 			case DELETE:
-				productService.deleteProduct(event.getKey()).block();
+				productService.deleteProduct(event.getKey(), null).block();
 				log.info(" > The product with id={} has been deleted at {}", event.getKey(), LocalDateTime.now());
 				break;
 			}

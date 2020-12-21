@@ -19,7 +19,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.me.api.core.health.HealthService;
+import com.me.api.core.product.health.ProductHealth;
+import com.me.api.core.recommendation.health.RecommendationHealth;
+import com.me.api.core.review.health.ReviewHealth;
 import com.me.microservices.core.composite.mapper.PagedMapper;
 import com.me.microservices.core.composite.mapper.PagedMapperImpl;
 import com.me.microservices.core.composite.mapper.RecommendationMapper;
@@ -72,8 +74,10 @@ public class Application {
 		private int pageSize;
 	}
 	
-	@Autowired
-	private HealthService healthService;
+	
+	@Autowired private ProductHealth productHealth;
+	@Autowired private RecommendationHealth recommendationHealth;
+	@Autowired private ReviewHealth reviewHealth;
 	
 	@Bean
 	public CompositeReactiveHealthContributor coreMicroservices() {
@@ -81,21 +85,21 @@ public class Application {
 		ReactiveHealthContributor productContributor = new ReactiveHealthIndicator() {
 			@Override
 			public Mono<Health> health() {
-				return healthService.getProductHealth();
+				return productHealth.getProductHealth();
 			}
 		};
 		
 		ReactiveHealthContributor recommendationContributor = new ReactiveHealthIndicator() {
 			@Override
 			public Mono<Health> health() {
-				return healthService.getRecommendationHealth();
+				return recommendationHealth.getRecommendationHealth();
 			}
 		};
 		
 		ReactiveHealthContributor reviewContributor = new ReactiveHealthIndicator() {
 			@Override
 			public Mono<Health> health() {
-				return healthService.getReviewHealth();
+				return reviewHealth.getReviewHealth();
 			}
 		};
 		

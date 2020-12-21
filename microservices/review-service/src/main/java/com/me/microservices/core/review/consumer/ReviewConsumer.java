@@ -8,8 +8,8 @@ import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
-import com.me.api.core.review.ReviewService;
 import com.me.api.event.Event;
+import com.me.microservices.core.review.api.ReviewsApi;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,10 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class ReviewConsumer {
 
-	private final ReviewService reviewService;
+	private final ReviewsApi reviewService;
 	
 	@Autowired
-	public ReviewConsumer(ReviewService reviewService) {
+	public ReviewConsumer(ReviewsApi reviewService) {
 		this.reviewService = reviewService;
 	}
 	
@@ -38,7 +38,7 @@ public class ReviewConsumer {
 		switch(event.getType()) {
 		
 		case DELETE:
-			reviewService.deleteReviews(event.getKey()).block();
+			reviewService.deleteReviews(event.getKey(), null).block();
 			log.info(" > The review(s) with productID={} has been deleted at {}", event.getKey(), LocalDateTime.now());
 			break;
 		}

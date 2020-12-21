@@ -4,6 +4,6 @@ set -e
 
 cd $(dirname $0)
 
-docker run --rm -d --name review-service -p 8083:8083 -ti -e JAVA_OPTS="-Xms512M -Xmx512M" -e "SPRING_PROFILES_ACTIVE=docker" review-service
+docker run --rm -d --name review-service -p 8083:8083 -ti -e JAVA_OPTS="-Xms512M -Xmx512M" -e SPRING_PROFILES_ACTIVE="dev" review-service
 
 cd -

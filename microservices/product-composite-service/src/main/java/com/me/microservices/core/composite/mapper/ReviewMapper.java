@@ -6,8 +6,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
-import com.me.api.composite.ReviewSummary;
-import com.me.api.core.review.Review;
+import com.me.microservices.core.productcomposite.api.model.ReviewSummary;
+import com.me.microservices.core.review.api.model.Review;
 
 @Mapper
 public interface ReviewMapper {
@@ -20,23 +20,23 @@ public interface ReviewMapper {
 			@Mapping(target="productID", ignore=true), 
 			@Mapping(target="creationDate", ignore=true),
 			@Mapping(target="updateDate", ignore=true)})
-	public Review toMsModel(ReviewSummary reviewSummary);
+	public Review toCoreModel(ReviewSummary reviewSummary);
 	
 	/**
 	 * @param listOfReviewSummary
 	 * @return list of {@link Review}
 	 */
-	public List<Review> toListOfMsModel(List<ReviewSummary> listOfReviewSummary);
+	public List<Review> toCoreModels(List<ReviewSummary> listOfReviewSummary);
 	
 	/**
 	 * @param msReview
 	 * @return {@link ReviewSummary}
 	 */
-	public ReviewSummary toModel(Review msReview);
+	public ReviewSummary toSummary(Review msReview);
 	
 	/**
 	 * @param listOfMsReview
 	 * @return list of {@link ReviewSummary}
 	 */
-	public List<ReviewSummary> toListOfModel(List<Review> listOfMsReview);
+	public List<ReviewSummary> toSummaries(List<Review> listOfMsReview);
 }

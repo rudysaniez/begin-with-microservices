@@ -1,12 +1,13 @@
 package com.me.api.composite;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode.Exclude;
 
+@Deprecated
 @Data @AllArgsConstructor
 public class ProductComposite {
 
@@ -17,10 +18,10 @@ public class ProductComposite {
 	private Integer weight;
 	
 	@Exclude
-	private Collection<RecommendationSummary> recommendations;
+	private List<RecommendationSummary> recommendations;
 	
 	@Exclude
-	private Collection<ReviewSummary> reviews;
+	private List<ReviewSummary> reviews;
 	
 	@SuppressWarnings("unchecked")
 	public ProductComposite() {

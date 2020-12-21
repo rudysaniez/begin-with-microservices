@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.Test;
 import org.mapstruct.factory.Mappers;
 
-import com.me.api.core.recommendation.Recommendation;
+import com.me.microservices.core.recommendation.api.model.Recommendation;
 import com.me.microservices.core.recommendation.bo.RecommendationEntity;
 import com.me.microservices.core.recommendation.mapper.RecommendationMapper;
 
