@@ -3,6 +3,7 @@ package com.me.microservices.core.review.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 import org.junit.Test;
 import org.mapstruct.factory.Mappers;
@@ -20,7 +21,8 @@ public class MapperTest {
 	@Test
 	public void mapper() {
 		
-		ReviewEntity entity = new ReviewEntity(1, 1, "rsaniez", "Review product", "Good product!");
+		ReviewEntity entity = new ReviewEntity(UUID.randomUUID().toString(), 1, 1, "rsaniez", 
+				"Review product", "Good product!");
 		
 		Review review = mapper.toModel(entity);
 		assertEquals(entity.getContent(), review.getContent());

@@ -3,7 +3,7 @@ logging:
   level:
     root: INFO
 
-server.port: 7003
+server.port: 8083
 
 management:
   endpoints:
@@ -25,10 +25,10 @@ spring:
       write-numbers-as-strings: false
     default-property-inclusion: NON_NULL
     date-format: yyyy-MM-dd'T'HH:mm:ssZ
-    
+
   webflux:
     base-path: /api/v1
-  
+
   cloud:
     stream:
       bindings:
@@ -42,50 +42,21 @@ spring:
             back-off-max-interval: 1000
             back-off-multiplier: 2.0
 
-  datasource:
-    hikari:
-      initialization-fail-timeout: 60000
+  data:
+    mongodb:
+      database: reviews_data
 
-  jpa:
-    hibernate:
-      #ddl-auto: update
-      ddl-auto: none
-      
-    show-sql: false
-    
-    properties:
-      '[hibernate.cache.use_query_cache]': true
-      '[hibernate.cache.use_second_level_cache]': false
-      '[hibernate.cache.region.factory_class]': org.hibernate.cache.jcache.internal.JCacheRegionFactory
-            
-      '[hibernate.javax.cache.provider]': org.ehcache.jsr107.EhcacheCachingProvider
-      '[hibernate.javax.cache.uri]': META-INF/ehcache.xml
-      
-      '[hibernate.generate_statistics]': false
-      '[hibernate.jdbc.wrap_result_sets]': true
-      '[hibernate.jdbc.batch_size]': 20
-      '[hibernate.default_batch_fetch_size]': 4
-  
-  cache:
-    jcache:
-      config: classpath:META-INF/ehcache.xml
-      
 spring.cloud.stream.rabbit.bindings.input.consumer:
   autoBindDlq: true
   republishToDlq: true
 
-spring.cloud.stream.kafka.bindings.input.consumer:
-  enableDlq: true
-    
 api:
   pagination:
     default-page-number: 0
     default-page-size: 10
-    
----
-spring.profiles: docker-api
 
-server.port: 8083
+---
+spring.profiles: docker
 
 logging:
   level:
@@ -97,28 +68,10 @@ logging:
     '[org.hibernate.type.descriptor.sql.BasicBinder]': TRACE
 
 spring:
-  jpa:
-    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+  data:
+    mongodb:
+      uri: mongodb+srv://${mongo-username}:${mongo-password}@${mongo-cluster}/${spring.data.mongodb.database}?retryWrites=true&w=majority
     
-    hibernate:
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-        
-  datasource:
-    url: jdbc:mysql://reviews-db:3306/reviewsdb?createDatabaseIfNotExist=true
-    username: michael
-    password: jordan
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    
-  liquibase:
-    change-log: classpath:liquibase/create-tables.xml
-    default-schema: reviewsdb
-    enabled: true
-    
----
-spring.profiles: docker-rabbit
-
-spring:
   cloud:
     stream:
       default-binder: rabbit
@@ -128,34 +81,3 @@ spring:
     port: 5672
     username: michael
     password: jordan
-
----
-spring.profiles: docker-kafka
-
-spring:
-  cloud:
-    stream:
-      default-binder: kafka
-    
-      kafka:
-        binder:
-          brokers: kafka:9092
-          replication-factor: 1
-          auto-create-topics: false
-
----
-spring.profiles: review-swagger
-
-api:
-  common:
-    version: 1.0.0
-    title: Review API
-    description: The review-api is an example for the API implementation
-    termsOfServiceUrl: MINE TERMS OF SERVICE URL
-    license: License
-    licenseUrl: MY LICENSE URL
-
-    contact:
-      name: Rudy SANIEZ
-      url: https://github.com/rudysaniez
-      email: rudysaniez@laposte.net

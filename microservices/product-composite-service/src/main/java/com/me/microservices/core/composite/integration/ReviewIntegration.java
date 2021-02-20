@@ -1,6 +1,5 @@
 package com.me.microservices.core.composite.integration;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.http.MediaType;
@@ -36,7 +35,6 @@ public class ReviewIntegration implements ReviewsApi, ReviewAsyncService, Review
 	private final MessageProcessor messageProcessor;
 	private final HandleHttpClientException handleException;
 	
-	@Autowired
 	public ReviewIntegration(WebClient.Builder webClientBuilder, MessageProcessor messageProcessor, 
 			HandleHttpClientException handleException,
 			@Value("${app.review-service.host}") String reviewServiceHost,

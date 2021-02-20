@@ -3,20 +3,20 @@ logging:
   level:
     root: INFO
 
-server.port: 7000
+server.port: 9080
  
 app:
   product-service:
     host: localhost
-    port: 7001
+    port: 8081
     
   recommendation-service:
     host: localhost
-    port: 7002
+    port: 8082
     
   review-service:
     host: localhost
-    port: 7003
+    port: 8083
  
 management:
   endpoints:
@@ -68,7 +68,7 @@ api.pagination:
   page-size: 5
     
 ---
-spring.profiles: docker-api
+spring.profiles: docker
 
 server.port: 9080
 
@@ -90,9 +90,6 @@ app:
     host: review
     port: 8083
 
----
-spring.profiles: docker-rabbit
-
 spring:
   cloud:
     stream:
@@ -103,35 +100,3 @@ spring:
     port: 5672
     username: michael
     password: jordan
-
----
-spring.profiles: docker-kafka
-
-spring:
-  cloud:
-    stream:
-      default-binder: kafka
-    
-      kafka:
-        binder:
-          brokers: kafka:9092
-          replication-factor: 1
-          auto-create-topics: true
-
----
-spring.profiles: product-composite-swagger
-
-api:
-  common:
-    version: 1.0.0
-    title: Product-composite API
-    description: The product-composite API is an example for the API implementation
-    termsOfServiceUrl: MINE TERMS OF SERVICE URL
-    license: License
-    licenseUrl: MY LICENSE URL
-
-    contact:
-      name: Rudy SANIEZ
-      url: https://github.com/rudysaniez
-      email: rudysaniez@laposte.net
-    

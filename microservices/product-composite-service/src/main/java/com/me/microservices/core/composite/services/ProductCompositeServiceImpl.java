@@ -3,6 +3,7 @@ package com.me.microservices.core.composite.services;
 import java.util.Collections;
 import java.util.List;
 
+import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,10 +41,11 @@ public class ProductCompositeServiceImpl implements ProductsCompositeApi {
 	@Autowired private ProductIntegration productIntegration;
 	@Autowired private RecommendationIntegration recommendationIntegration;
 	@Autowired private ReviewIntegration reviewIntegration;
-	@Autowired private RecommendationMapper recommendationMapper;
-	@Autowired private ReviewMapper reviewMapper;
-	@Autowired private PagedMapper pagedMapper;
 	@Autowired private PaginationInformation pagination;
+	
+	private RecommendationMapper recommendationMapper = Mappers.getMapper(RecommendationMapper.class);
+	private ReviewMapper reviewMapper = Mappers.getMapper(ReviewMapper.class);
+	private PagedMapper pagedMapper = Mappers.getMapper(PagedMapper.class);
 	
 	private static final ServerWebExchange USELESS = null;
 	

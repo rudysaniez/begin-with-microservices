@@ -11,9 +11,7 @@ spring.profiles: dev
 spring:
   data:
     mongodb:
-      host: localhost
-      database: recommendationsdb
-      port: 27017
+      uri: mongodb+srv://${mongo-username}:${mongo-password}@${mongo-cluster}/${spring.data.mongodb.database}?retryWrites=true&w=majority
       
   cloud:
     stream:
@@ -24,5 +22,3 @@ spring:
     port: 5672
     username: michael
     password: jordan
-      
-server.port: 8082

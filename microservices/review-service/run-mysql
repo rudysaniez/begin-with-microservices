@@ -1,5 +1,0 @@
-#!/bin/bash
-
-set -e 
-
-docker run -d --name mysql-review -p 3306:3306 -e MYSQL_ROOT_PASSWORD="welcome" -e MYSQL_USER="michael" -e MYSQL_PASSWORD="jordan" -e MYSQL_DATABASE="reviewsdb" mysql:latest

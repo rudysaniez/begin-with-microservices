@@ -3,71 +3,81 @@ package com.me.microservices.core.review.bo;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.IndexDirection;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor @Data
-@Entity
-@Table(name="REVIEW", catalog="reviewsdb")
+@Data @NoArgsConstructor
+@CompoundIndex(name="review_comp_IDX", unique=true, def="{'reviewID':1, 'productID':1}")
+@Document(collection = "reviews")
 public class ReviewEntity implements Serializable {
 
 	@Id
-	@Column(name="ID")
-	@lombok.EqualsAndHashCode.Exclude
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private Integer id;
+	private String id;
 	
-	@NotNull
-	@Column(name="REVIEW_ID", unique=true)
+	@Indexed(name = "reviewId_IDX", unique = true, direction = IndexDirection.ASCENDING) @NotNull
 	private Integer reviewID;
 	
 	@NotNull
-	@Column(name="PRODUCT_ID")
 	private Integer productID;
 	
 	@NotEmpty
-	@Column(name="AUTHOR")
 	private String author;
 	
 	@NotEmpty
-	@Column(name="SUBJECT")
 	private String subject;
 	
 	@NotEmpty
-	@Column(name="CONTENT")
 	private String content;
 	
-	@Column(name="CREATION_DATE")
+	@Version
+	private Integer version;
+	
+	@CreatedDate
 	private LocalDateTime creationDate;
 	
-	@Column(name="UPDATE_DATE")
+	@LastModifiedDate
 	private LocalDateTime updateDate;
 	
 	private static final long serialVersionUID = 1L;
 	
 	/**
+	 * @param id
 	 * @param reviewID
 	 * @param productID
 	 * @param author
 	 * @param subject
 	 * @param content
 	 */
-	public ReviewEntity(Integer reviewID, Integer productID, String author, String subject, String content) {
+	@PersistenceConstructor
+	public ReviewEntity(String id, Integer reviewID, Integer productID, String author, String subject, String content) {
 		
+		this.id = id;
 		this.reviewID = reviewID;
 		this.productID = productID;
 		this.author = author;
 		this.subject = subject;
 		this.content = content;
 		this.creationDate = LocalDateTime.now();
+	}
+	
+	/**
+	 * @param id
+	 * @return {@link ReviewEntity}
+	 */
+	public ReviewEntity withId(String id) {
+		return new ReviewEntity(id, this.reviewID, this.productID, this.author, this.subject, this.content);
 	}
 }

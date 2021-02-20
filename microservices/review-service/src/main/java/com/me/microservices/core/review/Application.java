@@ -1,76 +1,44 @@
 package com.me.microservices.core.review;
 
-import java.util.concurrent.Executors;
-
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.messaging.Sink;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mongodb.core.ReactiveMongoOperations;
+import org.springframework.data.mongodb.core.index.IndexResolver;
+import org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;
+import org.springframework.data.mongodb.core.index.ReactiveIndexOperations;
+import org.springframework.data.mongodb.core.mapping.MongoPersistentEntity;
+import org.springframework.data.mongodb.core.mapping.MongoPersistentProperty;
+import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 
-import com.me.microservices.core.review.mapper.ReviewMapper;
-import com.me.microservices.core.review.mapper.ReviewMapperImpl;
-import com.me.microservices.core.review.repository.ReactiveReviewRepository;
-import com.me.microservices.core.review.repository.ReviewRepository;
+import com.me.microservices.core.review.bo.ReviewEntity;
 
 import lombok.Getter;
 import lombok.Setter;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @EnableBinding(value = Sink.class)
-@EnableCaching
-@EnableTransactionManagement
 @EnableConfigurationProperties(value=Application.PaginationInformation.class)
-@EnableJpaRepositories
+@EnableReactiveMongoRepositories
 @ComponentScan(basePackages= {"com.me.microservices.core", "com.me.handler.http"})
 @SpringBootApplication
 public class Application {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
-	}
-	
-	/**
-	 * Review mapper : Entity to Model and inversely.
-	 * @return {@link ReviewMapper}
-	 */
-	@Bean
-	public ReviewMapper reviewMapper() {
-		return new ReviewMapperImpl();
-	}
-	
-	/**
-	 * @return {@link Scheduler}
-	 */
-	@Bean
-	public Scheduler scheduler() {
-		return Schedulers.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
-	}
-	
-	/**
-	 * @param reviewRepository
-	 * @return {@link ReactiveReviewRepository}
-	 */
-	@Bean
-	public ReactiveReviewRepository reactiveJpaRepository(ReviewRepository reviewRepository) {
-		return new ReactiveReviewRepository(reviewRepository, scheduler());
+		
+		SpringApplication app = new SpringApplication(Application.class);
+		app.setWebApplicationType(WebApplicationType.REACTIVE);
+		app.setBannerMode(Mode.CONSOLE);
+		app.run(args);
 	}
 	
 	/**
@@ -85,38 +53,16 @@ public class Application {
 		private Integer defaultPageSize;
 	}
 	
-	/**
-	 * <pre>
-	 * http://$HOST:$PORT/api/v1/swagger-ui.html
-	 * </pre>
-	 * @author rudysaniez
-	 */
-	@Profile("review-swagger")
-	@Configuration
-	@EnableSwagger2
-	public class SpringFoxSwagger {
-		
-		@Value("${api.common.version}") String version;
-		@Value("${api.common.title}") String title;
-		@Value("${api.common.description}") String description;
-		@Value("${api.common.termsOfServiceUrl}") String termsOfServiceUrl;
-		@Value("${api.common.license}") String license;
-		@Value("${api.common.licenseUrl}") String licenseUrl;
-		@Value("${api.common.contact.name}") String contactName;
-		@Value("${api.common.contact.url}") String contactUrl;
-		@Value("${api.common.contact.email}") String contactEmail;
-		
-		@Bean
-	    public Docket api() { 
-			
-	        return new Docket(DocumentationType.SWAGGER_2)  
-	          .select()                                  
-	          .apis(RequestHandlerSelectors.basePackage("com.me.work.example.microservices.core.review"))              
-	          .paths(PathSelectors.any())                          
-	          .build()
-	          .apiInfo(new ApiInfo(title, description, version, termsOfServiceUrl, 
-	        		  new Contact(contactName, contactUrl, contactEmail), 
-	        		  	license, licenseUrl, java.util.Collections.emptyList()));
-	    }
+	@Autowired
+	private ReactiveMongoOperations mongoTemplate;
+	
+	@EventListener(ContextRefreshedEvent.class)
+	public void initIndicesAfterStartup() {
+
+		MappingContext<? extends MongoPersistentEntity<?>, MongoPersistentProperty> mappingContext = mongoTemplate.getConverter().getMappingContext();
+		IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
+
+		ReactiveIndexOperations nomenclatureIndexOps = mongoTemplate.indexOps(ReviewEntity.class);
+		resolver.resolveIndexFor(ReviewEntity.class).forEach(e -> nomenclatureIndexOps.ensureIndex(e).block());
 	}
 }
