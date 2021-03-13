@@ -1,6 +1,6 @@
 
 version: "2.1"
-  
+
 services:
 
   recommendation:
@@ -16,7 +16,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker-api,docker-rabbit,recommendation-swagger
       - JAVA_OPTS=-Xms512M -Xmx512M
-      
+
   mongodb:
     image: mongo:3.6.9
     container_name: mongodb
@@ -29,7 +29,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      
+
   rabbitmq:
     image: rabbitmq:3.7.8-management
     mem_limit: 350m

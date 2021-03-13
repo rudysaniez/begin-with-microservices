@@ -12,23 +12,9 @@ logging:
 spring.profiles: dev
 
 spring:
-  jpa:
-    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
-    
-    hibernate:
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-        
-  datasource:
-    url: jdbc:mysql://localhost:3306/reviewsdb?createDatabaseIfNotExist=true
-    username: michael
-    password: jordan
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    
-  liquibase:
-    change-log: classpath:liquibase/create-tables.xml
-    default-schema: reviewsdb
-    enabled: true
+  data:
+    mongodb:
+      uri: mongodb+srv://${mongo-username}:${mongo-password}@${mongo-cluster}/${spring.data.mongodb.database}?retryWrites=true&w=majority
     
   cloud:
     stream:
@@ -39,5 +25,3 @@ spring:
     port: 5672
     username: michael
     password: jordan
-    
-server.port: 8083

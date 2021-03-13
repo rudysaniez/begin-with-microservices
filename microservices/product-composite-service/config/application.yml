@@ -31,5 +31,3 @@ app:
   review-service:
     host: localhost
     port: 8083
-
-server.port: 9080

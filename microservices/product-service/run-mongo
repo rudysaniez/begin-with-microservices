@@ -2,4 +2,4 @@
 
 set -e 
 
-docker run -d --name mongo-product -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME="michael" -e MONGO_INITDB_ROOT_PASSWORD="jordan" mongo:3.2.4
+docker run -d --name mongo-product -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME="michael" -e MONGO_INITDB_ROOT_PASSWORD="jordan" mongo:3.6.9

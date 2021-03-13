@@ -3,7 +3,7 @@ package com.me.microservices.core.review.service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mapstruct.factory.Mappers;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,23 +23,20 @@ import com.me.microservices.core.review.api.model.PagedReview;
 import com.me.microservices.core.review.api.model.Review;
 import com.me.microservices.core.review.bo.ReviewEntity;
 import com.me.microservices.core.review.mapper.ReviewMapper;
-import com.me.microservices.core.review.repository.ReactiveReviewRepository;
+import com.me.microservices.core.review.repository.ReviewRepository;
 
 import reactor.core.publisher.Mono;
 
 @RestController
 public class ReviewServiceImpl implements ReviewsApi {
 	
-	private final ReactiveReviewRepository reviewRepository;
-	private final ReviewMapper mapper;
+	private final ReviewRepository reviewRepository;
+	private final ReviewMapper mapper = Mappers.getMapper(ReviewMapper.class);
 	private final PaginationInformation pagination;
 	
-	@Autowired
-	public ReviewServiceImpl(ReactiveReviewRepository reviewRepository, ReviewMapper mapper, 
-			PaginationInformation pagination) {
+	public ReviewServiceImpl(ReviewRepository reviewRepository, PaginationInformation pagination) {
 		
 		this.reviewRepository = reviewRepository;
-		this.mapper = mapper;
 		this.pagination = pagination;
 	}
 	
@@ -51,10 +48,10 @@ public class ReviewServiceImpl implements ReviewsApi {
 		
 		if(reviewID < 1) throw new InvalidInputException("ReviewID should be greater than 0.");
 		
-		return reviewRepository.findByReviewId(reviewID).
+		return reviewRepository.findByReviewID(reviewID).
 			switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
-			log().
-			map(mapper::toModel).map(r -> ResponseEntity.ok(r));
+			map(mapper::toModel).map(r -> ResponseEntity.ok(r)).
+			log();
 	}
 
 	/**
@@ -68,26 +65,28 @@ public class ReviewServiceImpl implements ReviewsApi {
 		if(pageSize == null || pageSize < 1) pageSize = pagination.getDefaultPageSize();
 		
 		Pageable page = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.ASC, "reviewID"));
+		Integer pSize = pageSize;
 		
-		return reviewRepository.findByProductID(productID, page).
-			log().
-			map(pageOfReview -> {
-				
-				PagedReview pagedReview = new PagedReview();
-				
-				PageMetadata pageMetadata = new PageMetadata();
-				pageMetadata.setNumber(Integer.toUnsignedLong(pageOfReview.getNumber()));
-				pageMetadata.setSize(Integer.toUnsignedLong(pageOfReview.getSize()));
-				pageMetadata.setTotalElements(pageOfReview.getTotalElements());
-				pageMetadata.setTotalPages(Integer.toUnsignedLong(pageOfReview.getTotalPages()));
-				
-				pagedReview.setPage(pageMetadata);
-				pagedReview.setContent(mapper.toListModel(pageOfReview.getContent()));
-				
-				return pagedReview;
-			}).
-			map(pagedReview -> ResponseEntity.ok(pagedReview)).
-			log();
+		return reviewRepository.countByProductID(productID).
+				log().
+				flatMap(count -> reviewRepository.findByProductID(productID, page).
+						map(mapper::toModel).
+						collectList().
+						map(list -> {
+							
+							PagedReview pageRecommendation = new PagedReview();
+							pageRecommendation.setContent(list);
+							
+							PageMetadata pageMetadata = new PageMetadata();
+							pageMetadata.setTotalElements(count);
+							pageMetadata.setSize(Integer.toUnsignedLong(page.getPageSize()));
+							pageMetadata.setNumber(Integer.toUnsignedLong(page.getPageNumber()));
+							pageMetadata.setTotalPages(count < pSize ? 1 : count % pSize == 0 ? count/pSize : ((count/pSize) + 1));
+							pageRecommendation.setPage(pageMetadata);
+	
+							return ResponseEntity.ok(pageRecommendation);
+						})
+				).log();
 	}
 	
 	/**
@@ -107,7 +106,6 @@ public class ReviewServiceImpl implements ReviewsApi {
 		}).
 		flatMap(re -> reviewRepository.save(re).
 				onErrorMap(DataIntegrityViolationException.class, e -> new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", re.getReviewID())))).
-		log().
 		map(mapper::toModel).
 		map(r -> ResponseEntity.status(HttpStatus.CREATED).body(r)).
 		log();
@@ -127,9 +125,8 @@ public class ReviewServiceImpl implements ReviewsApi {
 			return r;
 		}).map(mapper::toEntity);
 		
-		return reviewRepository.findByReviewId(reviewID).
+		return reviewRepository.findByReviewID(reviewID).
 			switchIfEmpty(Mono.error(new NotFoundException(String.format("Review with reviewID=%d doesn't not exists.", reviewID)))).
-			log().
 			transform(m -> m.concatWith(modelToEntity).collectList().
 					map(list -> {
 						
@@ -148,11 +145,9 @@ public class ReviewServiceImpl implements ReviewsApi {
 						return reviewInDatabase.get();
 					})
 			).
-			log().
 			flatMap(re -> reviewRepository.save(re).
 					onErrorMap(DataIntegrityViolationException.class, e -> new InvalidInputException(String.format("Duplicate key : check the reviewID (%d).", re.getReviewID())))
 			).
-			log().
 			map(mapper::toModel).
 			map(r -> ResponseEntity.ok(r)).
 			log();
@@ -166,8 +161,8 @@ public class ReviewServiceImpl implements ReviewsApi {
 	
 		if(productID < 1) throw new InvalidInputException("ProductID should be greater than 0.");
 		
-		return reviewRepository.deleteEntityByProductID(productID).
-				flatMap(b -> Mono.<Void>empty()).
-				map(v -> ResponseEntity.ok(v));
+		return reviewRepository.deleteByProductID(productID).
+				 map(v -> ResponseEntity.ok(v)).
+				 log();
 	}
 }

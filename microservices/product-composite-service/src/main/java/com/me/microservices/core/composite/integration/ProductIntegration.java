@@ -1,6 +1,5 @@
 package com.me.microservices.core.composite.integration;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.http.MediaType;
@@ -36,7 +35,6 @@ public class ProductIntegration implements ProductsApi, ProductAsyncService, Pro
 	private final MessageProcessor messageProcessor;
 	private final HandleHttpClientException handleException;
 	
-	@Autowired
 	public ProductIntegration(WebClient.Builder webClientBuilder, MessageProcessor messageProcessor,
 			HandleHttpClientException handleException,
 			@Value("${app.product-service.host}") String productServiceHost,

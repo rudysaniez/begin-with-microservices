@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
 
 import com.me.microservices.core.review.api.model.Review;
 import com.me.microservices.core.review.bo.ReviewEntity;
@@ -15,6 +16,9 @@ public interface ReviewMapper {
 	 * @param review
 	 * @return {@link ReviewEntity}
 	 */
+	@Mappings(value = {@Mapping(target = "id", ignore = true), 
+			@Mapping(target = "withId", ignore = true), 
+			@Mapping(target = "version", ignore = true)})
 	@Mapping(target = "id", ignore = true)
 	public ReviewEntity toEntity(Review review);
 	

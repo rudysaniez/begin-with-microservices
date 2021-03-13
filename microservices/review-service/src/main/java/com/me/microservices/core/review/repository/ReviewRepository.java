@@ -1,56 +1,54 @@
 package com.me.microservices.core.review.repository;
 
-import java.util.Optional;
-
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 
 import com.me.microservices.core.review.bo.ReviewEntity;
 
-@Transactional
-public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public interface ReviewRepository extends ReactiveMongoRepository<ReviewEntity, String> {
 
 	/**
 	 * @param reviewID
 	 * @return optional of {@link ReviewEntity}
 	 */
-	@Transactional(readOnly=true)
-	public Optional<ReviewEntity> findByReviewID(Integer reviewID);
+	public Mono<ReviewEntity> findByReviewID(Integer reviewID);
 	
 	/**
 	 * @param productID
 	 * @param page
-	 * @return page of {@link ReviewEntity}
+	 * @return {@link ReviewEntity}
 	 */
-	@Transactional(readOnly=true)
-	public Page<ReviewEntity> findByProductID(Integer productID, Pageable page);
+	public Flux<ReviewEntity> findByProductID(Integer productID, Pageable page);
+	
+	/**
+	 * @param productID
+	 * @return
+	 */
+	public Mono<Long> countByProductID(Integer productID);
 	
 	/**
 	 * @param reviewID
 	 * @param productID
-	 * @return optional of {@link ReviewEntity}
+	 * @return {@link ReviewEntity}
 	 */
-	@Transactional(readOnly=true)
-	public Optional<ReviewEntity> findByReviewIDAndProductID(Integer reviewID, Integer productID);
+	public Mono<ReviewEntity> findByReviewIDAndProductID(Integer reviewID, Integer productID);
 	
 	/**
 	 * @param id
 	 * @return True or False
 	 */
-	@Transactional(readOnly=true)
-	public boolean existsByReviewID(Integer id);
+	public Mono<Boolean> existsByReviewID(Integer id);
 	
 	/**
 	 * @param reviewID
 	 */
-	@Transactional
-	public void deleteByReviewID(Integer reviewID);
+	public Mono<Void> deleteByReviewID(Integer reviewID);
 	
 	/**
 	 * @param productID
 	 */
-	@Transactional
-	public void deleteByProductID(Integer productID);
+	public Mono<Void> deleteByProductID(Integer productID);
 }

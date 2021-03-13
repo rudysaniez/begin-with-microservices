@@ -54,29 +54,6 @@
 		</plugins>
 	</build>
 	
-	<dependencyManagement>
-	
-		<dependencies>
-			<!-- Open API and Swagger UI -->
-			<dependency>
-				<groupId>org.springdoc</groupId>
-				<artifactId>springdoc-openapi-webflux-ui</artifactId>
-				<version>1.4.6</version>
-			</dependency>
-			<dependency>
-				<groupId>io.springfox</groupId>
-				<artifactId>springfox-swagger2</artifactId>
-				<version>3.0.0</version>
-			</dependency>
-			<dependency>
-				<groupId>io.springfox</groupId>
-				<artifactId>springfox-swagger-ui</artifactId>
-				<version>3.0.0</version>
-			</dependency>		
-		</dependencies>
-		
-	</dependencyManagement>
-	
 	<modules>
 		<module>api</module>
 		<module>microservices</module>
